@@ -11,6 +11,9 @@ interface AppContextType {
   // Sound Persistence
   isGlobalMuted: boolean;
   setIsGlobalMuted: (muted: boolean) => void;
+  // Cursor State
+  cursorVariant: string;
+  setCursorVariant: (variant: string) => void;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -19,6 +22,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   const [isReelPlaying, setIsReelPlaying] = useState(false);
   const [activeVideoId, setActiveVideoId] = useState<string | null>(null);
   const [isGlobalMuted, setIsGlobalMuted] = useState(true); // Default to muted for browser compatibility
+  const [cursorVariant, setCursorVariant] = useState('default');
 
   const playReel = () => setIsReelPlaying(true);
   const stopReel = () => setIsReelPlaying(false);
@@ -32,7 +36,9 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         activeVideoId,
         setActiveVideoId,
         isGlobalMuted,
-        setIsGlobalMuted
+        setIsGlobalMuted,
+        cursorVariant,
+        setCursorVariant
       }}
     >
       {children}
