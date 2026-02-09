@@ -1,5 +1,4 @@
-
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { Project } from '../types';
@@ -12,6 +11,14 @@ interface ProjectCardProps {
 const ProjectCard: React.FC<ProjectCardProps> = ({ project }) => {
   const [isHovered, setIsHovered] = useState(false);
   const [isImageLoaded, setIsImageLoaded] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 768);
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
   const getPlatformIcon = () => {
     switch (project.platform) {
@@ -26,13 +33,13 @@ const ProjectCard: React.FC<ProjectCardProps> = ({ project }) => {
     <Link
       to={`/portfolio/${project.id}`}
       className="block group relative"
-      onMouseEnter={() => setIsHovered(true)}
+      onMouseEnter={() => !isMobile && setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
       onTouchStart={() => setIsHovered(true)}
       onTouchEnd={() => setIsHovered(false)}
     >
       <motion.div 
-        layoutId={`project-container-${project.id}`} 
+        layoutId={isMobile ? undefined : `project-container-${project.id}`} 
         className="relative aspect-video md:aspect-[16/10] overflow-hidden bg-[#0d0d0d] rounded-xl md:rounded-3xl ring-1 ring-white/5 group-hover:ring-white/10 transition-all duration-700 shadow-xl"
       >
         <div className="absolute inset-0 z-0">
@@ -41,14 +48,14 @@ const ProjectCard: React.FC<ProjectCardProps> = ({ project }) => {
             alt={project.title}
             className="w-full h-full object-cover grayscale opacity-70 md:opacity-50 group-hover:grayscale-0 group-hover:opacity-100 transition-all duration-1000 ease-[cubic-bezier(0.22,1,0.36,1)] scale-[1.01] group-hover:scale-105"
             loading="lazy"
+            decoding="async"
             onLoad={() => setIsImageLoaded(true)}
             initial={{ opacity: 0 }}
             animate={{ opacity: isImageLoaded ? 1 : 0 }}
-            layoutId={`project-image-${project.id}`}
+            layoutId={isMobile ? undefined : `project-image-${project.id}`}
           />
         </div>
         
-        {/* Deeper gradient for mobile readability */}
         <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/40 to-transparent z-20" />
         
         <div className="absolute bottom-0 left-0 w-full p-5 md:p-12 z-30 pointer-events-none">
@@ -85,12 +92,12 @@ const ProjectCard: React.FC<ProjectCardProps> = ({ project }) => {
       </motion.div>
       
       <AnimatePresence>
-        {isHovered && (
+        {!isMobile && isHovered && (
             <motion.div 
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 0.12 }}
                 exit={{ opacity: 0 }}
-                className="absolute -inset-4 md:-inset-10 bg-accent blur-[40px] md:blur-[120px] -z-10 rounded-full hidden md:block"
+                className="absolute -inset-10 bg-accent blur-[120px] -z-10 rounded-full"
             />
         )}
       </AnimatePresence>

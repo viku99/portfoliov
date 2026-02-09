@@ -17,9 +17,17 @@ const fadeUp: Variants = {
 
 const ProjectDetail = () => {
   const { projectId } = useParams();
-  const { setActiveVideoId, setIsGlobalMuted } = useAppContext();
+  const { activeVideoId, setActiveVideoId, setIsGlobalMuted } = useAppContext();
   const [isReelsMode, setIsReelsMode] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
   const reelsContainerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 768);
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
   const projectIndex = useMemo(() => 
     PROJECTS.findIndex((p) => p.id === projectId),
@@ -41,7 +49,7 @@ const ProjectDetail = () => {
     const observer = new IntersectionObserver(
       (entries) => {
         entries.forEach(entry => {
-          if (entry.isIntersecting && entry.intersectionRatio >= 0.7) {
+          if (entry.isIntersecting && entry.intersectionRatio >= 0.6) {
             const id = entry.target.getAttribute('data-reel-id');
             if (id) setActiveVideoId(id);
           }
@@ -49,7 +57,7 @@ const ProjectDetail = () => {
       },
       {
         root: reelsContainerRef.current,
-        threshold: 0.7,
+        threshold: 0.6,
       }
     );
 
@@ -62,7 +70,6 @@ const ProjectDetail = () => {
   if (!project || !nextProject) return null;
 
   const enterReelsMode = () => {
-    // On interaction, we set global muted to false to allow automatic playback with sound thereafter
     setIsGlobalMuted(false); 
     setIsReelsMode(true);
     const firstId = `reel-${projectId}-0`;
@@ -87,12 +94,12 @@ const ProjectDetail = () => {
             exit={{ opacity: 0 }}
             className="fixed inset-0 z-[200] bg-black h-[100dvh] w-full"
           >
-            {/* Minimal Header - Audio Toggles Removed */}
-            <div className="absolute top-0 left-0 w-full z-[220] p-6 flex justify-between items-center bg-gradient-to-b from-black/95 to-transparent pointer-events-none">
+            {/* Minimal Header - Solid bg on mobile for performance */}
+            <div className={`absolute top-0 left-0 w-full z-[220] p-6 flex justify-between items-center ${isMobile ? 'bg-black' : 'bg-gradient-to-b from-black/95 to-transparent backdrop-blur-sm'} pointer-events-none`}>
               <div className="flex items-center gap-4">
                 <button 
                    onClick={exitReelsMode}
-                   className="pointer-events-auto p-2.5 bg-white/10 backdrop-blur-2xl rounded-full text-white active:scale-90 hover:bg-white/20 transition-all"
+                   className="pointer-events-auto p-2.5 bg-white/10 rounded-full text-white active:scale-90 transition-all"
                 >
                   <ArrowLeft size={22} />
                 </button>
@@ -109,6 +116,8 @@ const ProjectDetail = () => {
             >
               {project.gallery?.map((item, idx) => {
                 const reelId = `reel-${projectId}-${idx}`;
+                const isActive = activeVideoId === reelId;
+                
                 return (
                   <div 
                     key={idx} 
@@ -116,19 +125,26 @@ const ProjectDetail = () => {
                     className="h-[100dvh] w-full snap-start relative flex items-center justify-center overflow-hidden"
                   >
                     {/* Perfect 9:16 Responsive Container */}
-                    <div className="w-full h-full md:max-w-[calc(100dvh*(9/16))] aspect-[9/16] bg-neutral-900 shadow-2xl md:rounded-[3rem] overflow-hidden relative border border-white/5">
-                      <VideoPlayer 
-                        type={item.type as 'youtube' | 'local'} 
-                        src={item.src} 
-                        autoplay={idx === 0}
-                        isReelsMode={true}
-                        reelId={reelId}
-                        loop={true}
-                      />
+                    <div className="w-full h-full md:max-w-[calc(100dvh*(9/16))] aspect-[9/16] bg-[#050505] shadow-2xl md:rounded-[3rem] overflow-hidden relative border border-white/5">
+                      {/* VIRTUALIZATION: Only mount VideoPlayer if it is the active one to prevent mobile memory/lag issues */}
+                      {(!isMobile || isActive) ? (
+                        <VideoPlayer 
+                          type={item.type as 'youtube' | 'local'} 
+                          src={item.src} 
+                          autoplay={true}
+                          isReelsMode={true}
+                          reelId={reelId}
+                          loop={true}
+                        />
+                      ) : (
+                        <div className="w-full h-full bg-black flex items-center justify-center">
+                          <div className="w-8 h-8 rounded-full border-2 border-white/10 border-t-white/40 animate-spin" />
+                        </div>
+                      )}
                     </div>
                     
                     <div className="absolute bottom-12 left-6 right-6 z-20 pointer-events-none flex flex-col gap-4 max-w-sm mx-auto">
-                      <div className="space-y-1.5 bg-black/50 backdrop-blur-xl p-5 rounded-3xl border border-white/10 inline-block self-start shadow-2xl">
+                      <div className={`space-y-1.5 ${isMobile ? 'bg-black/90' : 'bg-black/50 backdrop-blur-xl'} p-5 rounded-3xl border border-white/10 inline-block self-start shadow-2xl`}>
                         <span className="text-[9px] uppercase tracking-[0.4em] font-mono text-white/30 block">
                           SEGMENT {idx + 1} // {project.gallery?.length}
                         </span>
@@ -191,7 +207,6 @@ const ProjectDetail = () => {
                           src={item.src} 
                           autoplay={false} 
                           reelId={reelId}
-                          className="scale-100 group-hover/card:scale-105 transition-transform duration-1000 ease-[cubic-bezier(0.22,1,0.36,1)]" 
                         />
                       </motion.div>
                     );
@@ -200,7 +215,10 @@ const ProjectDetail = () => {
               </div>
             ) : (
               <div className="space-y-12">
-                <motion.div layoutId={`project-container-${project.id}`} className="relative aspect-video rounded-[2.5rem] overflow-hidden border border-white/5 bg-primary shadow-2xl">
+                <motion.div 
+                   layoutId={isMobile ? undefined : `project-container-${project.id}`} 
+                   className="relative aspect-video rounded-[2rem] overflow-hidden border border-white/5 bg-primary shadow-2xl"
+                >
                     <VideoPlayer {...project.heroVideo} reelId={`hero-${project.id}`} />
                 </motion.div>
                 <h1 className="text-5xl md:text-[9.5vw] font-black uppercase tracking-tighter leading-[0.8]">{project.title}</h1>
