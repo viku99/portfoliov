@@ -5,7 +5,8 @@ export interface Project {
   category: string;
   description: string;
   imageUrl: string;
-  isSeries?: boolean; // Flag to identify multi-video collections
+  themeColor?: string; // Dominant color for UI atmosphere
+  isSeries?: boolean; 
   cardPreviewVideo: {
     type: 'local' | 'youtube';
     src: string;

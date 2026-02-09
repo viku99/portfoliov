@@ -1,10 +1,6 @@
 
 import { Project } from './types';
 
-// ============================================================================
-// SITE CONFIGURATION
-// ============================================================================
-
 export const SOCIAL_LINKS = [
   { name: 'LinkedIn', href: "https://www.linkedin.com/in/vikasbala19" },
   { name: 'Behance', href: "https://www.behance.net/vikasbala" },
@@ -20,114 +16,89 @@ export const SITE_INFO = {
   domain: "vikasbala.in"
 };
 
-// ============================================================================
-// PROJECT DATA
-// ============================================================================
-
 export const PROJECTS: Project[] = [
   {
-    id: "cyber-runner",
-    title: "CYBER RUNNER",
-    category: "AMV",
-    description: "High-octane rhythmic edit exploring futuristic urban landscapes.",
-    imageUrl: "https://images.unsplash.com/photo-1605810230434-7631ac76ec81?auto=format&fit=crop&q=80&w=1200",
-    cardPreviewVideo: { type: 'youtube', src: 'CPnMek8iU1U' },
-    heroVideo: { type: 'youtube', src: 'CPnMek8iU1U' },
+    id: "instagram-reel-edits",
+    title: "INSTAGRAM REEL EDITS",
+    category: "Social Media",
+    themeColor: "#E1306C",
+    isSeries: true,
+    description: "High-energy short-form content designed for maximum engagement. This collection showcases dynamic editing techniques optimized for the fast-paced nature of Instagram Reels and YouTube Shorts.",
+    imageUrl: "https://images.unsplash.com/photo-1611162617213-7d7a39e9b1d7?auto=format&fit=crop&q=80&w=1200",
+    cardPreviewVideo: { type: 'youtube', src: 'YrKrMnNG9qs' },
+    heroVideo: { type: 'youtube', src: 'YrKrMnNG9qs' },
+    gallery: [
+      { type: 'youtube', src: 'YrKrMnNG9qs', label: 'Dynamic Motion 01' },
+      { type: 'youtube', src: 'FJfR3MZJF0s', label: 'Visual Rhythm 02' }
+    ],
     details: {
-      role: "Editor",
+      role: "Motion Designer & Editor",
       techStack: ["After Effects", "Premiere Pro"],
       year: 2025,
-      analysis: "Focused on kinetic typography and frame-perfect audio sync."
+      analysis: "The focus of this series was to master the 'hook'—capturing viewer attention within the first 1.5 seconds. I utilized aggressive speed ramping, rhythmic jump cuts, and custom motion graphics to create a seamless flow that keeps the viewer engaged. Each edit is precisely synchronized with audio transients to enhance the tactile feel of the visuals."
     }
   },
   {
-    id: "sync-escape",
-    title: "SYNC: ESCAPE",
-    category: "Motion design",
-    description: "Visualizing the feeling of digital liberation through fluid motion.",
-    imageUrl: "https://images.unsplash.com/photo-1550684848-fac1c5b4e853?auto=format&fit=crop&q=80&w=1200",
-    cardPreviewVideo: { type: 'youtube', src: 'CPnMek8iU1U' },
-    heroVideo: { type: 'youtube', src: 'CPnMek8iU1U' },
+    id: "eyewear-ad-series",
+    title: "EYEWEAR AD SERIES",
+    category: "Commercial",
+    themeColor: "#D4AF37",
+    isSeries: true,
+    description: "Eyewear Advertisement Video Series. A collection of short-form eyewear advertisement videos created with a focus on clean visuals, strong product presence, and platform-ready pacing for social media.",
+    imageUrl: "https://images.unsplash.com/photo-1574258495973-f010dfbb5371?auto=format&fit=crop&q=80&w=1200",
+    cardPreviewVideo: { type: 'youtube', src: 'f6iuy43bH_c' },
+    heroVideo: { type: 'youtube', src: 'f6iuy43bH_c' },
+    gallery: [
+      { type: 'youtube', src: 'f6iuy43bH_c', label: 'Luxe Frame 01' },
+      { type: 'youtube', src: 'rs6GKOwx3Nk', label: 'Urban Silhouette 02' },
+      { type: 'youtube', src: 'IQgDgnhNAGc', label: 'Classic Detail 03' },
+      { type: 'youtube', src: '4ZBInDJCYxw', label: 'Premium Finish 04' },
+      { type: 'youtube', src: 'Xd1u0Nq2OPo', label: 'Visual Impact 05' },
+      { type: 'youtube', src: 'zIQeQ7u3jjg', label: 'Cinematic Frame 06' },
+      { type: 'youtube', src: 'OPWKwNWvvDg', label: 'Modern Edge 07' },
+      { type: 'youtube', src: 'fRXgk7cRHN0', label: 'Classic Look 08' },
+      { type: 'youtube', src: 'Pd0-FhXhBrI', label: 'Urban Style 09' },
+      { type: 'youtube', src: 'vUv6pDNBOGo', label: 'Premium Flow 10' }
+    ],
     details: {
-      role: "Motion Designer",
-      techStack: ["Cinema 4D", "Redshift"],
+      role: "Visual Designer & Editor",
+      techStack: ["After Effects", "Nano Banana", "Photoshop"],
       year: 2025,
-      analysis: "Exploring organic shapes within a digital void."
+      analysis: `This project is a collection of short-form eyewear advertisement videos created with a focus on clean visuals, strong product presence, and platform-ready pacing for social media. The objective was to refine eyewear visuals and convert them into polished, ad-ready videos, emphasizing frame design, clarity, and a premium retail aesthetic.
+
+Workflow & Tools Used:
+- Adobe After Effects for video editing, motion refinement, transitions, and final compositing.
+- Nano Banana for frame quality enhancement, visual consistency, and AI-assisted asset creation.
+- Adobe Photoshop for refining eyewear images, cleaning details, and preparing high-quality visuals for animation.
+
+These videos were developed for an eyewear retail store based in Bangalore. For confidentiality reasons, the client’s logo has been intentionally blurred. All videos are formatted for vertical platforms such as YouTube Shorts and Instagram Reels, with an emphasis on smooth motion, clarity, and visual impact.`
     }
   },
   {
-    id: "mg-shining-star",
-    title: "MG - SHINING STAR",
-    category: "AMV",
-    description: "A tribute to classic motion graphics through contemporary anime editing.",
-    imageUrl: "https://images.unsplash.com/photo-1614850523296-d8c1af93d400?auto=format&fit=crop&q=80&w=1200",
-    cardPreviewVideo: { type: 'youtube', src: 'CPnMek8iU1U' },
-    heroVideo: { type: 'youtube', src: 'CPnMek8iU1U' },
+    id: "ai-video-prompting",
+    title: "AI-VIDEO PROMPTING",
+    category: "AI Experiments",
+    themeColor: "#8a2be2",
+    isSeries: true,
+    description: "AI-Generated Eyewear Frame Video Series. This project explores AI-driven video generation for eyewear product visualization, focusing on cinematic presentation, mood, and form rather than traditional product shoots.",
+    imageUrl: "https://images.unsplash.com/photo-1677442136019-21780ecad995?auto=format&fit=crop&q=80&w=1200",
+    cardPreviewVideo: { type: 'youtube', src: 'bCnWijdu36Q' },
+    heroVideo: { type: 'youtube', src: 'bCnWijdu36Q' },
+    gallery: [
+      { type: 'youtube', src: 'bCnWijdu36Q', label: 'AI Generation 01' },
+      { type: 'youtube', src: '2lB3fNeKpY8', label: 'Neural Narrative 02' },
+      { type: 'youtube', src: 'VMVR4tbL3Zc', label: 'Latent Space 03' },
+      { type: 'youtube', src: 'm38z7e-SF9Q', label: 'Prompt Craft 04' }
+    ],
     details: {
-      role: "Editor",
-      techStack: ["After Effects"],
-      year: 2024,
-      analysis: "Synthesizing vector graphics with high-fidelity footage."
-    }
-  },
-  {
-    id: "striking-bold",
-    title: "STRIKING BOLD",
-    category: "Motion design",
-    description: "Heavy typography and high-contrast visuals for a sports broadcast opener.",
-    imageUrl: "https://images.unsplash.com/photo-1541462608141-ad6034e40263?auto=format&fit=crop&q=80&w=1200",
-    cardPreviewVideo: { type: 'youtube', src: 'CPnMek8iU1U' },
-    heroVideo: { type: 'youtube', src: 'CPnMek8iU1U' },
-    details: {
-      role: "Lead Motion Designer",
-      techStack: ["After Effects", "Illustrator"],
-      year: 2024,
-      analysis: "Maximizing impact through bold color palettes and aggressive easing."
-    }
-  },
-  {
-    id: "gravity",
-    title: "GRAVITY",
-    category: "Short Film",
-    description: "An experimental short exploring weightlessness and isolation.",
-    imageUrl: "https://images.unsplash.com/photo-1446776811953-b23d57bd21aa?auto=format&fit=crop&q=80&w=1200",
-    cardPreviewVideo: { type: 'youtube', src: 'CPnMek8iU1U' },
-    heroVideo: { type: 'youtube', src: 'CPnMek8iU1U' },
-    details: {
-      role: "Director",
-      techStack: ["Unreal Engine 5", "DaVinci Resolve"],
+      role: "AI Director",
+      techStack: ["Veo 3", "Midjourney", "Stable Diffusion"],
       year: 2025,
-      analysis: "Cinematic storytelling within a real-time environment."
-    }
-  },
-  {
-    id: "akira-tribute",
-    title: "AKIRA TRIBUTE",
-    category: "AMV",
-    description: "Remastering the visual energy of Akira for the modern age.",
-    imageUrl: "https://images.unsplash.com/photo-1614728263952-84ea256f9679?auto=format&fit=crop&q=80&w=1200",
-    cardPreviewVideo: { type: 'youtube', src: 'CPnMek8iU1U' },
-    heroVideo: { type: 'youtube', src: 'CPnMek8iU1U' },
-    details: {
-      role: "Editor",
-      techStack: ["After Effects", "Premiere Pro"],
-      year: 2023,
-      analysis: "Enhancing frame-by-frame animation with custom lighting effects."
-    }
-  },
-  {
-    id: "guardian",
-    title: "GUARDIAN",
-    category: "VFX",
-    description: "Complex character integration and environment replacement.",
-    imageUrl: "https://images.unsplash.com/photo-1534447677768-be436bb09401?auto=format&fit=crop&q=80&w=1200",
-    cardPreviewVideo: { type: 'youtube', src: 'CPnMek8iU1U' },
-    heroVideo: { type: 'youtube', src: 'CPnMek8iU1U' },
-    details: {
-      role: "VFX Artist",
-      techStack: ["Nuke", "Cinema 4D", "X-Particles"],
-      year: 2025,
-      analysis: "Seamlessly blending real-world photography with high-end digital assets."
+      analysis: `The videos were created using AI video generation workflows, with AI-assisted storyboarding and concept development to define framing, pacing, and visual language. Additional AI image tools were used selectively as reference material during ideation and prompt refinement.
+
+Each video is designed to highlight: frame design and silhouette, material presence and reflections, premium retail aesthetics, and smooth, ad-ready motion language.
+
+These visuals were developed for an eyewear retail store based in Bangalore. For confidentiality reasons, the brand logo has been intentionally blurred in the final video outputs shown here. If you’d like to know more about the client or the creative process, feel free to get in touch directly.`
     }
   }
 ];

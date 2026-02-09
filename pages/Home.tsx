@@ -19,7 +19,6 @@ const Home = () => {
   const smoothY = useSpring(mouseY, springConfig);
   
   useEffect(() => {
-    // Initialize dimensions only on mount
     setWindowSize({ width: window.innerWidth, height: window.innerHeight });
 
     const handleResize = () => {
@@ -68,8 +67,8 @@ const Home = () => {
     };
   }, [navigate, mouseX, mouseY]);
 
-  const rotateX = useTransform(smoothY, [0, windowSize.height || 1000], [10, -10]);
-  const rotateY = useTransform(smoothX, [0, windowSize.width || 1920], [-10, 10]);
+  const rotateX = useTransform(smoothY, [0, windowSize.height || 1000], [8, -8]);
+  const rotateY = useTransform(smoothX, [0, windowSize.width || 1920], [-8, 8]);
 
   const name = SITE_INFO.name;
 
@@ -85,7 +84,7 @@ const Home = () => {
   };
 
   const letterVariants: Variants = {
-    hidden: { opacity: 0, y: 100, skewX: -20 },
+    hidden: { opacity: 0, y: 100, skewX: -15 },
     visible: {
       opacity: 1,
       y: 0,
@@ -95,16 +94,16 @@ const Home = () => {
   };
   
   const subtitleVariants: Variants = {
-      hidden: { opacity: 0, y: 30 },
+      hidden: { opacity: 0, y: 20 },
       visible: { opacity: 1, y: 0, transition: { duration: 0.8, delay: 1.0, ease: 'easeOut' } }
   }
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center text-center p-6 relative overflow-hidden bg-background">
+    <div className="h-[100dvh] flex flex-col items-center justify-center text-center p-6 relative overflow-hidden bg-background">
       <motion.div style={{ perspective: '1200px' }} className="z-10 w-full px-4">
           <motion.div style={{ rotateX, rotateY, transformStyle: 'preserve-3d' }}>
             <motion.h1
-              className="text-[22vw] md:text-[16vw] lg:text-[14rem] font-[900] tracking-tighter text-accent leading-[0.8] mb-8 select-none"
+              className="text-[24vw] md:text-[16vw] lg:text-[14rem] font-[900] tracking-tighter text-accent leading-[0.8] mb-8 select-none"
               variants={containerVariants}
               initial="hidden"
               animate="visible"
@@ -118,15 +117,15 @@ const Home = () => {
             </motion.h1>
             
             <motion.div 
-              className="flex flex-col gap-4 mt-2"
+              className="flex flex-col gap-3 md:gap-4 mt-2"
               variants={subtitleVariants}
               initial="hidden"
               animate="visible"
             >
-              <h2 className="text-sm md:text-xl lg:text-2xl text-accent font-black uppercase tracking-[0.2em] md:tracking-[0.45em]">
+              <h2 className="text-[10px] md:text-xl lg:text-2xl text-accent font-black uppercase tracking-[0.3em] md:tracking-[0.45em]">
                 {SITE_INFO.role}
               </h2>
-              <p className="text-[10px] md:text-lg text-neutral-500 max-w-2xl mx-auto font-medium tracking-wide px-4">
+              <p className="text-[9px] md:text-lg text-neutral-500 max-w-lg md:max-w-2xl mx-auto font-medium tracking-wide px-4 leading-relaxed">
                 {SITE_INFO.tagline}
               </p>
             </motion.div>
@@ -139,16 +138,16 @@ const Home = () => {
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: 1, delay: 2.2 }}
-        className="absolute bottom-20 md:bottom-12"
+        className="absolute bottom-24 md:bottom-12"
       >
-        <Link to="/portfolio" aria-label="Scroll to portfolio">
+        <Link to="/portfolio" aria-label="Explore portfolio">
             <motion.div
               animate={{ y: [0, 8, 0] }}
               transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
-              className="flex flex-col items-center gap-3"
+              className="flex flex-col items-center gap-2 md:gap-3"
             >
-              <span className="text-[8px] md:text-[9px] uppercase tracking-[0.6em] md:tracking-[0.8em] text-neutral-600 font-mono">Scroll to explore</span>
-              <ChevronDown className="w-5 h-5 text-neutral-800" />
+              <span className="text-[7px] md:text-[9px] uppercase tracking-[0.6em] md:tracking-[0.8em] text-neutral-600 font-mono">Archive entry</span>
+              <ChevronDown className="w-4 h-4 md:w-5 md:h-5 text-neutral-800" />
             </motion.div>
         </Link>
       </motion.div>
