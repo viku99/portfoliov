@@ -1,4 +1,3 @@
-
 import React, { useEffect, useRef, useState } from 'react';
 import { motion, Variants, useMotionValue, useTransform, useSpring } from 'framer-motion';
 import { Link, useNavigate } from 'react-router-dom';
@@ -10,6 +9,7 @@ const Home = () => {
   const navigatedRef = useRef(false);
   const touchStartY = useRef(0);
   const [windowSize, setWindowSize] = useState({ width: 0, height: 0 });
+  const [isTouch, setIsTouch] = useState(false);
   
   const mouseX = useMotionValue(0);
   const mouseY = useMotionValue(0);
@@ -20,12 +20,15 @@ const Home = () => {
   
   useEffect(() => {
     setWindowSize({ width: window.innerWidth, height: window.innerHeight });
+    setIsTouch('ontouchstart' in window || navigator.maxTouchPoints > 0);
 
     const handleResize = () => {
       setWindowSize({ width: window.innerWidth, height: window.innerHeight });
     };
 
     const handleMouseMove = (e: MouseEvent) => {
+      // PERFORMANCE: Avoid setting values on move for touch devices
+      if (isTouch) return;
       mouseX.set(e.clientX);
       mouseY.set(e.clientY);
     };
@@ -65,10 +68,11 @@ const Home = () => {
       window.removeEventListener('touchstart', handleTouchStart);
       window.removeEventListener('touchmove', handleTouchMove);
     };
-  }, [navigate, mouseX, mouseY]);
+  }, [navigate, mouseX, mouseY, isTouch]);
 
-  const rotateX = useTransform(smoothY, [0, windowSize.height || 1000], [8, -8]);
-  const rotateY = useTransform(smoothX, [0, windowSize.width || 1920], [-8, 8]);
+  // Disable expensive transforms on mobile
+  const rotateX = useTransform(smoothY, [0, windowSize.height || 1000], isTouch ? [0, 0] : [8, -8]);
+  const rotateY = useTransform(smoothX, [0, windowSize.width || 1920], isTouch ? [0, 0] : [-8, 8]);
 
   const name = SITE_INFO.name;
 
@@ -84,18 +88,17 @@ const Home = () => {
   };
 
   const letterVariants: Variants = {
-    hidden: { opacity: 0, y: 100, skewX: -15 },
+    hidden: { opacity: 0, y: 50 },
     visible: {
       opacity: 1,
       y: 0,
-      skewX: 0,
-      transition: { duration: 1, ease: [0.22, 1, 0.36, 1] },
+      transition: { duration: 0.8, ease: [0.22, 1, 0.36, 1] },
     },
   };
   
   const subtitleVariants: Variants = {
       hidden: { opacity: 0, y: 20 },
-      visible: { opacity: 1, y: 0, transition: { duration: 0.8, delay: 1.0, ease: 'easeOut' } }
+      visible: { opacity: 1, y: 0, transition: { duration: 0.8, delay: 0.8, ease: 'easeOut' } }
   }
 
   return (
@@ -137,7 +140,7 @@ const Home = () => {
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
-        transition={{ duration: 1, delay: 2.2 }}
+        transition={{ duration: 1, delay: 1.5 }}
         className="absolute bottom-24 md:bottom-12"
       >
         <Link to="/portfolio" aria-label="Explore portfolio">
