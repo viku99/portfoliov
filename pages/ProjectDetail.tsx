@@ -1,7 +1,7 @@
 import React, { useMemo, useEffect, useState, useRef } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { motion, Variants, AnimatePresence } from 'framer-motion';
-import { ArrowLeft, ChevronDown, Terminal, Zap } from 'lucide-react';
+import { ArrowLeft, ChevronDown, Terminal, Zap, Youtube, ExternalLink, X, Monitor } from 'lucide-react';
 import { PROJECTS } from '../constants';
 import VideoPlayer from '../components/VideoPlayer';
 import { useAppContext } from '../contexts/AppContext';
@@ -20,7 +20,9 @@ const ProjectDetail = () => {
   const { activeVideoId, setActiveVideoId, setIsGlobalMuted } = useAppContext();
   const [isReelsMode, setIsReelsMode] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
+  const [showYTPopup, setShowYTPopup] = useState(false);
   const reelsContainerRef = useRef<HTMLDivElement>(null);
+  const popupTimerRef = useRef<number | null>(null);
 
   useEffect(() => {
     const checkMobile = () => setIsMobile(window.innerWidth < 768);
@@ -37,13 +39,28 @@ const ProjectDetail = () => {
   const project = projectIndex !== -1 ? PROJECTS[projectIndex] : null;
   const nextProject = project ? PROJECTS[(projectIndex + 1) % PROJECTS.length] : null;
 
-  // Global scroll restoration cleanup
+  // Show popup on mount for the project detail page
+  useEffect(() => {
+    if (project) {
+      // Small delay before showing for a more organic entrance
+      const initialDelay = setTimeout(() => {
+        if (!isReelsMode) setShowYTPopup(true);
+      }, 800);
+
+      if (popupTimerRef.current) window.clearTimeout(popupTimerRef.current);
+      popupTimerRef.current = window.setTimeout(() => {
+          setShowYTPopup(false);
+      }, 7000); 
+      
+      return () => clearTimeout(initialDelay);
+    }
+  }, [projectId, project, isReelsMode]);
+
   useEffect(() => {
     return () => {
       document.body.style.overflow = '';
       document.documentElement.style.overflow = '';
-      document.body.style.position = '';
-      document.body.style.width = '';
+      if (popupTimerRef.current) window.clearTimeout(popupTimerRef.current);
     };
   }, []);
 
@@ -81,23 +98,67 @@ const ProjectDetail = () => {
     const firstId = `reel-${projectId}-0`;
     setActiveVideoId(firstId);
     
-    // Strict Lock background
     document.body.style.overflow = 'hidden';
     document.documentElement.style.overflow = 'hidden';
+    setShowYTPopup(false); 
   };
 
   const exitReelsMode = () => {
     setIsReelsMode(false);
     setActiveVideoId(null);
     
-    // Strict Restore scroll
     document.body.style.overflow = '';
     document.documentElement.style.overflow = '';
   };
 
+  const getYTUrl = (src: string) => `https://www.youtube.com/watch?v=${src}`;
+
   return (
     <motion.div initial="hidden" animate="visible" className="bg-background text-accent min-h-screen">
       
+      {/* Universal Quality Popup - Hidden in Reels Mode */}
+      <AnimatePresence>
+        {showYTPopup && !isReelsMode && (
+          <motion.div 
+            initial={{ y: 50, x: "-50%", opacity: 0, scale: 0.95 }}
+            animate={{ y: 0, x: "-50%", opacity: 1, scale: 1 }}
+            exit={{ y: 20, x: "-50%", opacity: 0, scale: 0.95 }}
+            transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+            className="fixed bottom-10 left-1/2 z-[1000] w-[94%] max-w-lg pointer-events-none"
+          >
+            <div className="pointer-events-auto bg-neutral-900/90 backdrop-blur-3xl border border-white/10 p-6 md:p-8 rounded-[2.5rem] flex items-center justify-between gap-8 shadow-[0_40px_80px_-20px_rgba(0,0,0,0.9)] overflow-hidden relative">
+              <div className="absolute top-0 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-white/20 to-transparent" />
+              
+              <div className="flex items-center gap-5 md:gap-7">
+                <div className="relative">
+                  <div className="p-4 md:p-5 bg-white/5 rounded-[1.5rem] border border-white/5 flex items-center justify-center text-white/80 group">
+                    <Monitor size={24} className="md:w-8 md:h-8" />
+                    <div className="absolute -top-1 -right-1 w-3 h-3 bg-red-600 rounded-full border-2 border-neutral-900 animate-pulse" />
+                  </div>
+                </div>
+                
+                <div className="flex flex-col gap-1">
+                  <div className="flex items-center gap-2">
+                    <span className="text-[10px] md:text-[11px] uppercase tracking-[0.4em] font-mono text-white/30">Optimization Advisory</span>
+                  </div>
+                  <h4 className="text-white font-black text-base md:text-xl uppercase tracking-tight leading-tight">High Fidelity Playback</h4>
+                  <p className="text-white/60 text-[11px] md:text-[13px] font-medium leading-relaxed max-w-[300px]">
+                    To experience this content in original 4K/60FPS quality, please redirect to the <span className="text-red-500 font-bold">YouTube</span> player.
+                  </p>
+                </div>
+              </div>
+
+              <button 
+                onClick={() => setShowYTPopup(false)}
+                className="p-3 hover:bg-white/10 rounded-full transition-all group flex-shrink-0"
+              >
+                <X size={22} className="text-white/20 group-hover:text-white transition-colors" />
+              </button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       <AnimatePresence>
         {isReelsMode && (
           <motion.div 
@@ -106,7 +167,7 @@ const ProjectDetail = () => {
             exit={{ opacity: 0 }}
             className="fixed inset-0 z-[500] bg-black h-[100dvh] w-full overflow-hidden"
           >
-            {/* Header controls - Always on top */}
+            {/* Header controls */}
             <div className={`absolute top-0 left-0 w-full z-[520] p-6 flex justify-between items-center ${isMobile ? 'bg-black/60 backdrop-blur-md' : 'bg-gradient-to-b from-black/95 to-transparent'} pointer-events-none`}>
               <div className="flex items-center gap-4">
                 <button 
@@ -122,14 +183,13 @@ const ProjectDetail = () => {
               </div>
             </div>
 
-            {/* Scroll Container - Optimized for mobile swipes */}
             <div 
               ref={reelsContainerRef}
               className="h-full w-full overflow-y-scroll snap-y snap-mandatory no-scrollbar bg-black"
               style={{ 
                 WebkitOverflowScrolling: 'touch',
                 scrollSnapType: 'y mandatory',
-                overscrollBehavior: 'contain' // Prevents scroll chaining to background
+                overscrollBehavior: 'contain'
               }}
             >
               {project.gallery?.map((item, idx) => {
@@ -151,7 +211,6 @@ const ProjectDetail = () => {
                          />
                       </div>
 
-                      {/* We only render the video if it's mobile or active to save resources */}
                       {(!isMobile || isActive) ? (
                         <VideoPlayer 
                           type={item.type as 'youtube' | 'local'} 
@@ -173,15 +232,17 @@ const ProjectDetail = () => {
                       )}
                     </div>
                     
-                    {/* Metadata Overlay */}
+                    {/* Metadata Overlay - No YouTube Button Here */}
                     <div className="absolute bottom-12 left-6 right-6 z-20 pointer-events-none flex flex-col gap-4 max-w-sm mx-auto">
-                      <div className={`space-y-1.5 ${isMobile ? 'bg-black/90' : 'bg-black/50 backdrop-blur-xl'} p-5 rounded-3xl border border-white/10 inline-block self-start shadow-2xl`}>
-                        <span className="text-[9px] uppercase tracking-[0.4em] font-mono text-white/30 block">
-                          SEGMENT {idx + 1} // {project.gallery?.length}
-                        </span>
-                        <h4 className="text-lg font-black uppercase tracking-tighter text-white">
-                          {item.label || "Visual Archive"}
-                        </h4>
+                      <div className={`space-y-4 ${isMobile ? 'bg-black/95' : 'bg-black/50 backdrop-blur-xl'} p-8 rounded-[2.5rem] border border-white/10 inline-block self-start shadow-2xl w-full`}>
+                        <div className="space-y-1">
+                          <span className="text-[10px] uppercase tracking-[0.4em] font-mono text-white/30 block">
+                            SEGMENT {idx + 1} // {project.gallery?.length}
+                          </span>
+                          <h4 className="text-xl font-black uppercase tracking-tighter text-white">
+                            {item.label || "Visual Archive"}
+                          </h4>
+                        </div>
                       </div>
                     </div>
 
@@ -224,30 +285,55 @@ const ProjectDetail = () => {
                   </button>
                 </div>
                 
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-4 md:gap-8">
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-8 md:gap-16">
                   {project.gallery?.map((item, idx) => {
                     const reelId = `gallery-${project.id}-${idx}`;
                     return (
-                      <motion.div 
-                        key={idx} 
-                        variants={fadeUp} 
-                        className="relative aspect-[9/16] rounded-3xl overflow-hidden border border-white/5 bg-primary shadow-xl group/card"
-                      >
-                        <VideoPlayer 
-                          type={item.type as 'youtube' | 'local'} 
-                          src={item.src} 
-                          autoplay={false} 
-                          reelId={reelId}
-                        />
-                      </motion.div>
+                      <div key={idx} className="space-y-4 md:space-y-6">
+                        <motion.div 
+                          variants={fadeUp} 
+                          className="relative aspect-[9/16] rounded-[2rem] md:rounded-[3rem] overflow-hidden border border-white/5 bg-primary shadow-2xl group/card"
+                        >
+                          <VideoPlayer 
+                            type={item.type as 'youtube' | 'local'} 
+                            src={item.src} 
+                            autoplay={false} 
+                            reelId={reelId}
+                          />
+                        </motion.div>
+                        {item.type === 'youtube' && (
+                          <div className="flex justify-center">
+                            <a 
+                              href={getYTUrl(item.src)}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="w-full flex items-center justify-center gap-3 bg-white/[0.03] hover:bg-red-600 transition-all duration-300 py-3.5 md:py-4.5 rounded-full text-[9px] md:text-[11px] uppercase tracking-[0.3em] font-black text-white/20 hover:text-white border border-white/5 hover:border-red-600 active:scale-[0.97] group/btn"
+                            >
+                              <Youtube size={16} fill="currentColor" className="transition-colors md:w-5 md:h-5" />
+                              <span className="transition-colors">WATCH ON YOUTUBE</span>
+                            </a>
+                          </div>
+                        )}
+                      </div>
                     );
                   })}
                 </div>
               </div>
             ) : (
               <div className="space-y-12">
-                <div className="relative aspect-video rounded-[2rem] overflow-hidden border border-white/5 bg-primary shadow-2xl">
+                <div className="relative aspect-video rounded-[2rem] overflow-hidden border border-white/5 bg-primary shadow-2xl group/hero">
                     <VideoPlayer {...project.heroVideo} reelId={`hero-${project.id}`} />
+                    {project.heroVideo.type === 'youtube' && (
+                      <a 
+                        href={getYTUrl(project.heroVideo.src)}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className={`absolute bottom-4 right-4 md:bottom-8 md:right-8 z-40 bg-neutral-900/80 backdrop-blur-xl border border-white/10 hover:bg-red-600 hover:border-red-600 px-6 py-3 md:px-10 md:py-4 rounded-full text-[9px] md:text-[11px] font-black uppercase tracking-[0.2em] flex items-center gap-3 transition-all shadow-[0_20px_50px_rgba(0,0,0,0.5)] hover:shadow-[0_20px_50px_rgba(220,38,38,0.4)] text-white/40 hover:text-white group/herobtn ${isMobile ? 'opacity-100' : 'opacity-0 group-hover/hero:opacity-100'}`}
+                      >
+                        <Youtube size={18} fill="currentColor" className="transition-colors md:w-5 md:h-5" />
+                        WATCH FULL RESOLUTION
+                      </a>
+                    )}
                 </div>
                 <h1 className="text-5xl md:text-[9.5vw] font-black uppercase tracking-tighter leading-[0.8]">{project.title}</h1>
               </div>
