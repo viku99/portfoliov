@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useAppContext } from '../contexts/AppContext';
@@ -10,9 +10,19 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const location = useLocation();
   const { isReelPlaying } = useAppContext();
 
+  // GLOBAL SCROLL GUARD: Prevents any page from being stuck after navigating
+  useEffect(() => {
+    document.body.style.overflow = 'auto';
+    document.documentElement.style.overflow = 'auto';
+    document.body.style.height = 'auto';
+    
+    // Ensure the scroll position is actually at the top on new pages
+    window.scrollTo(0, 0);
+  }, [location.pathname]);
+
   return (
     <div className="bg-background text-accent font-sans min-h-screen relative overflow-x-hidden selection:bg-accent selection:text-background">
-      {/* PERFORMANCE FIX: Grain is completely hidden on mobile (hidden md:block) as it heavily lags mobile GPUs */}
+      {/* PERFORMANCE FIX: Grain is hidden on mobile to prevent GPU lag */}
       <div className="fixed inset-0 pointer-events-none z-[100] opacity-[0.03] overflow-hidden hidden md:block">
         <div className="absolute inset-[-200%] bg-[url('https://grainy-gradients.vercel.app/noise.svg')] animate-grain" />
       </div>

@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence, useMotionValue, useSpring, useTransform } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
@@ -47,10 +46,6 @@ const PremiumPortfolio: React.FC<PremiumPortfolioProps> = ({ projects }) => {
     );
   }, [projects, query]);
 
-  useEffect(() => {
-    setCenterIndex(0);
-  }, [filtered.length]);
-
   const handleNext = useCallback(() => {
     if (filtered.length === 0) return;
     setCenterIndex(prev => (prev + 1) % filtered.length);
@@ -66,55 +61,28 @@ const PremiumPortfolio: React.FC<PremiumPortfolioProps> = ({ projects }) => {
       if (autoScrollRef.current) clearInterval(autoScrollRef.current);
       return;
     }
-
-    autoScrollRef.current = window.setInterval(() => {
-      handleNext();
-    }, 6100);
-
-    return () => {
-      if (autoScrollRef.current) clearInterval(autoScrollRef.current);
-    };
+    autoScrollRef.current = window.setInterval(handleNext, 6100);
+    return () => { if (autoScrollRef.current) clearInterval(autoScrollRef.current); };
   }, [isPaused, filtered.length, handleNext]);
 
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (document.activeElement?.tagName === 'INPUT') return;
-      if (e.key === 'ArrowRight') { handleNext(); setIsPaused(true); }
-      if (e.key === 'ArrowLeft') { handlePrev(); setIsPaused(true); }
-    };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [handleNext, handlePrev]);
-
-  const handleMouseMove = (e: React.MouseEvent) => {
-    if (isMobile || !containerRef.current) return;
-    const rect = containerRef.current.getBoundingClientRect();
-    const x = e.clientX - (rect.left + rect.width / 2);
-    const y = e.clientY - (rect.top + rect.height / 2);
-    mouseX.set(x);
-    mouseY.set(y);
-  };
-
+  // SMART WHEEL HANDLER: Only prevents default for horizontal scrolling
   useEffect(() => {
     const el = containerRef.current;
     if (!el) return;
 
     const onWheel = (e: WheelEvent) => {
-      e.preventDefault();
-      const now = Date.now();
-      if (now - lastWheelTime.current < 450) return;
-      
-      const dominantDelta = Math.abs(e.deltaY) > Math.abs(e.deltaX) ? e.deltaY : e.deltaX;
-      if (Math.abs(dominantDelta) < 10) return;
-
-      setIsPaused(true);
-      if (dominantDelta > 0) {
-        handleNext();
-        lastWheelTime.current = now;
-      } else if (dominantDelta < 0) {
-        handlePrev();
+      // If user is scrolling horizontally (like on trackpad), handle carousel
+      if (Math.abs(e.deltaX) > Math.abs(e.deltaY)) {
+        e.preventDefault();
+        const now = Date.now();
+        if (now - lastWheelTime.current < 150) return;
+        
+        setIsPaused(true);
+        if (e.deltaX > 0) handleNext();
+        else handlePrev();
         lastWheelTime.current = now;
       }
+      // Vertical scrolling is left to the browser, so users don't get stuck!
     };
 
     el.addEventListener('wheel', onWheel, { passive: false });
@@ -124,25 +92,22 @@ const PremiumPortfolio: React.FC<PremiumPortfolioProps> = ({ projects }) => {
   const getCardProps = (i: number) => {
     const L = filtered.length;
     if (L === 0) return null;
-
     let rel = i - centerIndex;
     if (rel > L / 2) rel -= L;
     if (rel < -L / 2) rel += L;
-
-    const angleStep = isMobile ? 1.0 : 0.45; 
-    const angle = rel * angleStep;
-    
+    const angle = rel * (isMobile ? 1.0 : 0.45);
     const x = Math.sin(angle) * RING_RADIUS_X;
     const y = -Math.cos(angle) * RING_RADIUS_Y + (RING_RADIUS_Y);
-    
     const dist = Math.abs(rel);
-    const z = -dist * (isMobile ? 180 : 250); 
-    const opacity = Math.max(0, 1 - dist * 0.5);
-    const scale = i === centerIndex ? (isMobile ? 1.05 : 1.3) : Math.max(0.4, 1 - dist * 0.4);
-    const rotateY = -rel * (isMobile ? 35 : 25); 
-    const zIndex = 100 - Math.round(dist * 10);
-    
-    return { x, y, z, opacity, scale, rotateY, zIndex, rel };
+    return { 
+      x, y, 
+      z: -dist * (isMobile ? 180 : 250), 
+      opacity: Math.max(0, 1 - dist * 0.5), 
+      scale: i === centerIndex ? (isMobile ? 1.05 : 1.3) : Math.max(0.4, 1 - dist * 0.4), 
+      rotateY: -rel * (isMobile ? 35 : 25), 
+      zIndex: 100 - Math.round(dist * 10), 
+      rel 
+    };
   };
 
   const getPlatformIcon = (p: Project) => {
@@ -159,11 +124,14 @@ const PremiumPortfolio: React.FC<PremiumPortfolioProps> = ({ projects }) => {
   return (
     <div 
       className="w-full relative select-none" 
-      onMouseMove={handleMouseMove}
+      onMouseMove={(e) => {
+        if (isMobile || !containerRef.current) return;
+        const rect = containerRef.current.getBoundingClientRect();
+        mouseX.set(e.clientX - (rect.left + rect.width / 2));
+        mouseY.set(e.clientY - (rect.top + rect.height / 2));
+      }}
       onMouseEnter={() => !isMobile && setIsPaused(true)}
       onMouseLeave={() => !isMobile && setIsPaused(false)}
-      onTouchStart={() => setIsPaused(true)}
-      onTouchEnd={() => setIsPaused(false)}
     >
       <div className="max-w-4xl mx-auto mb-8 md:mb-24 px-6">
         <div className="bg-[#0f0f0f]/40 backdrop-blur-2xl border border-white/5 rounded-full px-6 py-1 flex items-center gap-4 shadow-2xl">
@@ -185,7 +153,7 @@ const PremiumPortfolio: React.FC<PremiumPortfolioProps> = ({ projects }) => {
 
       <div 
         ref={containerRef}
-        className="relative h-[480px] md:h-[750px] flex items-center justify-center overflow-visible touch-none"
+        className="relative h-[480px] md:h-[750px] flex items-center justify-center overflow-visible"
       >
         <div className="absolute inset-0 pointer-events-none overflow-hidden">
            <motion.div 
@@ -202,12 +170,9 @@ const PremiumPortfolio: React.FC<PremiumPortfolioProps> = ({ projects }) => {
           <AnimatePresence mode="popLayout">
             {filtered.map((p, i) => {
               const props = getCardProps(i);
-              if (!props) return null;
-              
+              if (!props || Math.abs(props.rel) > VISIBLE_RANGE) return null;
               const { x, y, z, opacity, scale, rotateY, zIndex, rel } = props;
               const isCenter = i === centerIndex;
-              if (Math.abs(rel) > VISIBLE_RANGE) return null;
-
               return (
                 <motion.div
                   key={p.id}
@@ -217,10 +182,8 @@ const PremiumPortfolio: React.FC<PremiumPortfolioProps> = ({ projects }) => {
                     rotateX: isCenter && !isMobile ? rotateActiveX : 0,
                     rotateY: isCenter && !isMobile ? rotateActiveY : rotateY,
                   }}
-                  initial={false}
                   animate={{ 
                     x, y, z, opacity, scale, 
-                    // PERFORMANCE FIX: Disable expensive blur filters on mobile
                     filter: isMobile ? 'none' : (isCenter ? 'blur(0px) saturate(1.1)' : `blur(${Math.abs(rel) * 10}px) saturate(0)`)
                   }}
                   transition={{ type: "spring", stiffness: 60, damping: 20 }}
@@ -228,26 +191,16 @@ const PremiumPortfolio: React.FC<PremiumPortfolioProps> = ({ projects }) => {
                 >
                   <div className={`relative w-[220px] md:w-[360px] aspect-[9/14] rounded-[2rem] md:rounded-[2.5rem] overflow-hidden group transition-all duration-700 ${isCenter ? 'shadow-[0_40px_100px_rgba(0,0,0,1)] ring-1 ring-white/10' : 'opacity-30'}`}>
                     <div className="absolute inset-0 bg-[#070707]" />
-                    <motion.img 
-                      style={{ scale: 1.2 }}
-                      src={p.imageUrl} 
-                      alt={p.title} 
-                      className="w-full h-full object-cover grayscale-0" 
-                    />
+                    <motion.img src={p.imageUrl} alt={p.title} className="w-full h-full object-cover scale-[1.2]" />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/30 to-transparent z-10" />
-                    
                     <div className="absolute inset-0 p-6 md:p-10 flex flex-col justify-end text-center z-20">
                        <div className="space-y-3 md:space-y-6 mb-8 md:mb-12">
                           <div className="flex items-center justify-center gap-2">
                              <span className="text-white/30 scale-75">{getPlatformIcon(p)}</span>
                              <span className="text-[8px] md:text-[10px] uppercase tracking-[0.4em] font-mono text-white/40">{p.category}</span>
                           </div>
-                          
-                          <h3 className="text-xl md:text-5xl font-black uppercase tracking-tighter leading-[0.85] text-white">
-                            {p.title}
-                          </h3>
+                          <h3 className="text-xl md:text-5xl font-black uppercase tracking-tighter leading-[0.85] text-white">{p.title}</h3>
                        </div>
-
                        <div className="absolute bottom-6 md:bottom-10 left-6 md:left-10 right-6 md:right-10 flex justify-between items-center text-white/10 font-mono text-[8px] md:text-[10px]">
                           <span>0{i + 1}</span>
                           <span>{p.details.year}</span>
@@ -263,37 +216,16 @@ const PremiumPortfolio: React.FC<PremiumPortfolioProps> = ({ projects }) => {
 
       <div className="flex flex-col items-center gap-8 md:gap-12 -mt-4 mb-20">
         <div className="flex items-center gap-8">
-           <button 
-            onClick={() => { handlePrev(); setIsPaused(true); }}
-            className="p-4 rounded-full border border-white/5 text-neutral-800 hover:text-white transition-all active:scale-90"
-           >
-              <ChevronDown className="w-4 h-4 rotate-90" />
-           </button>
-           
+           <button onClick={handlePrev} className="p-4 rounded-full border border-white/5 text-neutral-800 hover:text-white transition-all active:scale-90"><ChevronDown className="w-4 h-4 rotate-90" /></button>
            <div className="flex gap-2">
               {filtered.map((_, idx) => (
-                <button 
-                  key={idx}
-                  onClick={() => { setCenterIndex(idx); setIsPaused(true); }}
-                  className={`h-1 transition-all duration-500 rounded-full ${idx === centerIndex ? 'w-8 bg-white/40' : 'w-1.5 bg-white/5'}`}
-                />
+                <button key={idx} onClick={() => setCenterIndex(idx)} className={`h-1 transition-all duration-500 rounded-full ${idx === centerIndex ? 'w-8 bg-white/40' : 'w-1.5 bg-white/5'}`} />
               ))}
            </div>
-
-           <button 
-            onClick={() => { handleNext(); setIsPaused(true); }}
-            className="p-4 rounded-full border border-white/5 text-neutral-800 hover:text-white transition-all active:scale-90"
-           >
-              <ChevronDown className="w-4 h-4 -rotate-90" />
-           </button>
+           <button onClick={handleNext} className="p-4 rounded-full border border-white/5 text-neutral-800 hover:text-white transition-all active:scale-90"><ChevronDown className="w-4 h-4 -rotate-90" /></button>
         </div>
-
-        <button 
-          onClick={() => document.getElementById('grid-scan-mode')?.scrollIntoView({ behavior: 'smooth' })}
-          className="group flex items-center gap-4 bg-white/5 border border-white/5 hover:bg-white hover:text-black px-8 py-4 rounded-full transition-all duration-500"
-        >
-          <LayoutGrid className="w-3.5 h-3.5" />
-          <span className="text-[9px] font-black uppercase tracking-[0.4em]">ARCHIVE LIST</span>
+        <button onClick={() => document.getElementById('grid-scan-mode')?.scrollIntoView({ behavior: 'smooth' })} className="group flex items-center gap-4 bg-white/5 border border-white/5 hover:bg-white hover:text-black px-8 py-4 rounded-full transition-all duration-500">
+          <LayoutGrid className="w-3.5 h-3.5" /><span className="text-[9px] font-black uppercase tracking-[0.4em]">ARCHIVE LIST</span>
         </button>
       </div>
     </div>
