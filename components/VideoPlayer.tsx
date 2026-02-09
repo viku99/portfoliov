@@ -1,16 +1,20 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { 
   Play, 
-  Pause, 
-  Volume2, 
-  VolumeX, 
   Loader2,
   Maximize,
   Minimize
 } from 'lucide-react';
-// Added AnimatePresence import from framer-motion
 import { AnimatePresence } from 'framer-motion';
 import { useAppContext } from '../contexts/AppContext';
+
+/**
+ * PRODUCTION-READY STABLE VIDEO PLAYER
+ * 
+ * Specifically engineered for YouTube Shorts (9:16) and Local Video.
+ * Audio is strictly tied to playback state. No manual controls.
+ * Fixes: TypeError when calling playVideo on uninitialized YT objects.
+ */
 
 interface VideoPlayerProps {
   type: 'local' | 'youtube' | 'video';
@@ -41,7 +45,7 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
   poster,
   loop = true
 }) => {
-  const { activeVideoId, setActiveVideoId, isGlobalMuted, setIsGlobalMuted } = useAppContext();
+  const { activeVideoId, setActiveVideoId } = useAppContext();
   const containerRef = useRef<HTMLDivElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const ytPlayerRef = useRef<any>(null);
@@ -54,7 +58,7 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
   const playerId = useRef(reelId || `v-${Math.random().toString(36).slice(2, 11)}`).current;
   const isActive = activeVideoId === playerId;
 
-  // Stability: Monitor Fullscreen
+  // Track Fullscreen state
   useEffect(() => {
     const handleFsChange = () => {
       setIsFullscreen(!!document.fullscreenElement && document.fullscreenElement === containerRef.current);
@@ -63,75 +67,120 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
     return () => document.removeEventListener('fullscreenchange', handleFsChange);
   }, []);
 
-  // Performance: Sync Playback state with Global Active ID
-  useEffect(() => {
-    if (!isReady) return;
-
-    const handlePlayback = async () => {
+  /**
+   * Defensive check for YouTube API methods
+   */
+  const callYT = useCallback((methodName: string, ...args: any[]) => {
+    const player = ytPlayerRef.current;
+    if (player && typeof player[methodName] === 'function') {
       try {
-        if (type === 'youtube') {
-          if (isActive) {
-            ytPlayerRef.current?.playVideo?.();
-            if (isGlobalMuted) ytPlayerRef.current?.mute?.();
-            else ytPlayerRef.current?.unMute?.();
-          } else {
-            ytPlayerRef.current?.pauseVideo?.();
-          }
-        } else if (videoRef.current) {
-          const video = videoRef.current;
-          video.muted = isGlobalMuted;
-          
-          if (isActive) {
-            const playPromise = video.play();
-            if (playPromise !== undefined) {
-              playPromise.catch(() => {
-                // Autoplay was prevented or playback was interrupted
-              });
-            }
-          } else {
-            video.pause();
-          }
-        }
-      } catch (err) {
-        console.error("Playback error:", err);
+        player[methodName](...args);
+      } catch (e) {
+        console.warn(`YouTube API call ${methodName} failed`, e);
       }
-    };
+      return true;
+    }
+    return false;
+  }, []);
 
-    handlePlayback();
-  }, [isActive, isGlobalMuted, isReady, type]);
+  /**
+   * Automatic Playback & Audio Logic
+   * Enforces the rule: Audio only plays when active and playing.
+   */
+  const syncPlayback = useCallback(async () => {
+    if (!isReady || hasError) return;
 
-  // YouTube API Setup
+    if (type === 'youtube') {
+      if (isActive) {
+        callYT('playVideo');
+        // Unmute only when it's the active video
+        callYT('unMute');
+      } else {
+        callYT('pauseVideo');
+        callYT('mute');
+      }
+    } else if (videoRef.current) {
+      const video = videoRef.current;
+      if (isActive) {
+        video.muted = false;
+        try {
+          await video.play();
+        } catch (e) {
+          // Autoplay policy fallback: start muted if needed
+          video.muted = true;
+          video.play().catch(() => {});
+        }
+      } else {
+        video.pause();
+        video.muted = true;
+      }
+    }
+  }, [isActive, isReady, type, hasError, callYT]);
+
+  useEffect(() => {
+    syncPlayback();
+  }, [syncPlayback]);
+
+  // Handle automatic audio muting when video is paused manually or ends
+  useEffect(() => {
+    if (type === 'youtube') {
+      if (!isPlaying) callYT('mute');
+      else if (isActive) callYT('unMute');
+    }
+  }, [isPlaying, isActive, type, callYT]);
+
+  // YouTube API Lifecycle
   const initYouTube = useCallback(() => {
     if (!window.YT || !window.YT.Player || ytPlayerRef.current) return;
 
-    ytPlayerRef.current = new window.YT.Player(playerId, {
-      videoId: src,
-      playerVars: {
-        autoplay: autoplay && isActive ? 1 : 0,
-        controls: 0,
-        rel: 0,
-        modestbranding: 1,
-        playsinline: 1,
-        mute: isGlobalMuted ? 1 : 0,
-        loop: loop ? 1 : 0,
-        playlist: loop ? src : undefined,
-        enablejsapi: 1,
-        origin: window.location.origin
-      },
-      events: {
-        onReady: () => setIsReady(true),
-        onStateChange: (event: any) => {
-          if (event.data === 1) setIsPlaying(true);
-          else if (event.data === 2) setIsPlaying(false);
-          else if (event.data === 0 && loop) event.target.playVideo();
+    try {
+      ytPlayerRef.current = new window.YT.Player(playerId, {
+        videoId: src,
+        playerVars: {
+          autoplay: autoplay && isActive ? 1 : 0,
+          controls: 0,
+          rel: 0,
+          modestbranding: 1,
+          playsinline: 1,
+          mute: isActive ? 0 : 1,
+          loop: loop ? 1 : 0,
+          playlist: loop ? src : undefined,
+          enablejsapi: 1,
+          origin: window.location.origin
         },
-        onError: () => setHasError(true)
-      }
-    });
-  }, [src, autoplay, isActive, isGlobalMuted, loop, playerId]);
+        events: {
+          onReady: () => {
+            setIsReady(true);
+            setHasError(false);
+            // After ready, sync again to ensure initial state is correct
+            if (isActive) {
+              callYT('playVideo');
+              callYT('unMute');
+            }
+          },
+          onStateChange: (event: any) => {
+            const state = event.data;
+            setIsPlaying(state === 1); // 1 = YT.PlayerState.PLAYING
+            if (state === 0 && loop) { // 0 = YT.PlayerState.ENDED
+              callYT('playVideo');
+            }
+          },
+          onError: () => {
+            setHasError(true);
+            setIsReady(false);
+          }
+        }
+      });
+    } catch (err) {
+      setHasError(true);
+    }
+  }, [src, autoplay, isActive, loop, playerId, callYT]);
 
   useEffect(() => {
-    if (type !== 'youtube') return;
+    if (type !== 'youtube') {
+      setIsReady(true);
+      return;
+    }
 
     if (!window.YT || !window.YT.Player) {
       if (!window._ytInitializers) {
@@ -150,17 +199,17 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
     }
 
     return () => {
-      if (ytPlayerRef.current?.destroy) {
+      if (ytPlayerRef.current && typeof ytPlayerRef.current.destroy === 'function') {
         ytPlayerRef.current.destroy();
         ytPlayerRef.current = null;
+        setIsReady(false);
       }
     };
   }, [type, initYouTube]);
 
-  // Handlers
   const handleTogglePlay = (e: React.MouseEvent) => {
     e.stopPropagation();
-    if (!isReady) return;
+    if (!isReady || hasError) return;
 
     if (!isActive) {
       setActiveVideoId(playerId);
@@ -168,20 +217,14 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
     }
 
     if (type === 'youtube') {
-      if (isPlaying) ytPlayerRef.current?.pauseVideo();
-      else ytPlayerRef.current?.playVideo();
+      if (isPlaying) callYT('pauseVideo');
+      else callYT('playVideo');
     } else if (videoRef.current) {
-      if (videoRef.current.paused) videoRef.current.play().catch(() => {});
-      else videoRef.current.pause();
+      videoRef.current.paused ? videoRef.current.play().catch(() => {}) : videoRef.current.pause();
     }
   };
 
-  const handleToggleMute = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    setIsGlobalMuted(!isGlobalMuted);
-  };
-
-  const toggleFs = (e: React.MouseEvent) => {
+  const handleToggleFullscreen = (e: React.MouseEvent) => {
     e.stopPropagation();
     if (!containerRef.current) return;
     if (!document.fullscreenElement) {
@@ -194,15 +237,21 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
   return (
     <div 
       ref={containerRef}
-      className={`relative w-full h-full bg-black overflow-hidden flex items-center justify-center group/player select-none ${className} ${isFullscreen ? 'z-[999]' : ''}`}
+      className={`relative w-full h-full bg-black overflow-hidden flex items-center justify-center group/player select-none cursor-pointer ${className} ${isFullscreen ? 'z-[999]' : ''}`}
       onClick={handleTogglePlay}
     >
-      {/* 1. Video Layer */}
+      {/* Precision Media Scaling for 9:16 content inside a 16:9 frame */}
       {type === 'youtube' ? (
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none overflow-hidden">
-          {/* Cover scaling for 16:9 into vertical 9:16 containers */}
-          <div className="w-[317%] h-full min-w-[317%] absolute">
-            <div id={playerId} className="w-full h-full" />
+          {/* 
+            Scaling logic:
+            Target container aspect is 9:16 (0.56).
+            Iframe aspect is 16:9 (1.77).
+            Ratio = 1.77 / 0.56 = 3.1605 (316.05%)
+            This ensures the vertical content fills the height and perfectly crops the horizontal black bars.
+          */}
+          <div className="w-[316.05%] h-full min-w-[316.05%] absolute">
+            <div id={playerId} className="w-full h-full pointer-events-none" />
           </div>
         </div>
       ) : (
@@ -212,7 +261,6 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
           poster={poster}
           className="w-full h-full object-cover"
           playsInline
-          muted={isGlobalMuted}
           loop={loop}
           preload="metadata"
           onLoadedMetadata={() => setIsReady(true)}
@@ -222,63 +270,47 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
         />
       )}
 
-      {/* 2. State Overlays */}
+      {/* State Overlays */}
       <AnimatePresence>
         {!isReady && !hasError && (
-          <div className="absolute inset-0 bg-black/20 backdrop-blur-sm flex items-center justify-center z-10">
+          <div className="absolute inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-10">
             <Loader2 className="w-8 h-8 text-white/20 animate-spin" />
           </div>
         )}
         {hasError && (
           <div className="absolute inset-0 bg-black/80 flex items-center justify-center z-10 p-4 text-center">
-            <p className="text-[10px] uppercase tracking-widest text-white/40">Load Error</p>
+            <p className="text-[10px] uppercase tracking-widest text-white/30 font-mono italic">Playback Failure</p>
           </div>
         )}
       </AnimatePresence>
 
-      {/* 3. Controls (Minimal YouTube Shorts Style) */}
+      {/* Interaction Feedback (No Audio Toggles) */}
       <div className="absolute inset-0 flex flex-col justify-between p-4 md:p-6 z-20 pointer-events-none opacity-0 group-hover/player:opacity-100 transition-opacity duration-300">
-        <div className="flex justify-end gap-2">
+        <div className="flex justify-end">
           <button 
-            onClick={toggleFs}
-            className="pointer-events-auto p-2.5 bg-black/40 backdrop-blur-xl rounded-full text-white/80 hover:text-white transition-all active:scale-90"
+            onClick={handleToggleFullscreen}
+            className="pointer-events-auto p-2.5 bg-black/40 backdrop-blur-xl rounded-full text-white/70 hover:text-white transition-all active:scale-90"
           >
             {isFullscreen ? <Minimize size={18} /> : <Maximize size={18} />}
           </button>
         </div>
 
-        <div className="flex justify-between items-end">
-          <div className="flex gap-2">
-            <button 
-              onClick={handleTogglePlay}
-              className="pointer-events-auto p-3 bg-white/10 backdrop-blur-2xl rounded-full text-white active:scale-90"
-            >
-              {isPlaying ? <Pause size={20} fill="currentColor" /> : <Play size={20} fill="currentColor" className="translate-x-0.5" />}
-            </button>
-            <button 
-              onClick={handleToggleMute}
-              className="pointer-events-auto p-3 bg-white/10 backdrop-blur-2xl rounded-full text-white active:scale-90"
-            >
-              {isGlobalMuted ? <VolumeX size={20} /> : <Volume2 size={20} />}
-            </button>
-          </div>
-          
-          {isReelsMode && (
-            <div className="text-[9px] font-mono tracking-widest text-white/20 uppercase">
-              {isPlaying ? 'Live' : 'Paused'}
+        <div className="flex justify-center items-center">
+          {!isPlaying && isReady && (
+            <div className="p-6 bg-black/30 backdrop-blur-2xl rounded-full text-white/50 border border-white/5 shadow-2xl">
+              <Play size={40} fill="currentColor" className="translate-x-1" />
+            </div>
+          )}
+        </div>
+
+        <div className="flex justify-start">
+          {isReelsMode && isPlaying && (
+            <div className="text-[9px] font-mono tracking-widest text-white/20 uppercase bg-black/20 px-3 py-1.5 rounded-full border border-white/5 backdrop-blur-md">
+              Artifact Streaming
             </div>
           )}
         </div>
       </div>
-
-      {/* Central Play/Pause Indicator (Mobile feel) */}
-      {!isPlaying && isReady && (
-        <div className="absolute inset-0 flex items-center justify-center pointer-events-none bg-black/10">
-          <div className="p-6 bg-black/20 backdrop-blur-2xl rounded-full text-white/40 border border-white/5">
-            <Play size={40} fill="currentColor" className="translate-x-1" />
-          </div>
-        </div>
-      )}
     </div>
   );
 };

@@ -1,8 +1,7 @@
-
 import React, { useMemo, useEffect, useState, useRef } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { motion, Variants, AnimatePresence } from 'framer-motion';
-import { ArrowLeft, X, ChevronDown, Terminal, Zap, Volume2, VolumeX } from 'lucide-react';
+import { ArrowLeft, ChevronDown, Terminal, Zap } from 'lucide-react';
 import { PROJECTS } from '../constants';
 import VideoPlayer from '../components/VideoPlayer';
 import { useAppContext } from '../contexts/AppContext';
@@ -18,7 +17,7 @@ const fadeUp: Variants = {
 
 const ProjectDetail = () => {
   const { projectId } = useParams();
-  const { setActiveVideoId, setIsGlobalMuted, isGlobalMuted } = useAppContext();
+  const { setActiveVideoId, setIsGlobalMuted } = useAppContext();
   const [isReelsMode, setIsReelsMode] = useState(false);
   const reelsContainerRef = useRef<HTMLDivElement>(null);
 
@@ -63,6 +62,7 @@ const ProjectDetail = () => {
   if (!project || !nextProject) return null;
 
   const enterReelsMode = () => {
+    // On interaction, we set global muted to false to allow automatic playback with sound thereafter
     setIsGlobalMuted(false); 
     setIsReelsMode(true);
     const firstId = `reel-${projectId}-0`;
@@ -87,26 +87,20 @@ const ProjectDetail = () => {
             exit={{ opacity: 0 }}
             className="fixed inset-0 z-[200] bg-black h-[100dvh] w-full"
           >
-            <div className="absolute top-0 left-0 w-full z-[220] p-6 flex justify-between items-center bg-gradient-to-b from-black/90 to-transparent pointer-events-none">
-              <div className="flex items-center gap-3">
+            {/* Minimal Header - Audio Toggles Removed */}
+            <div className="absolute top-0 left-0 w-full z-[220] p-6 flex justify-between items-center bg-gradient-to-b from-black/95 to-transparent pointer-events-none">
+              <div className="flex items-center gap-4">
                 <button 
                    onClick={exitReelsMode}
-                   className="pointer-events-auto p-2 bg-white/10 backdrop-blur-2xl rounded-full text-white active:scale-90"
+                   className="pointer-events-auto p-2.5 bg-white/10 backdrop-blur-2xl rounded-full text-white active:scale-90 hover:bg-white/20 transition-all"
                 >
-                  <ArrowLeft size={20} />
+                  <ArrowLeft size={22} />
                 </button>
                 <div className="flex flex-col">
-                   <span className="text-[10px] font-black uppercase tracking-widest text-white/50">{project.category}</span>
-                   <h3 className="text-xs font-bold uppercase tracking-tight text-white">{project.title}</h3>
+                   <span className="text-[10px] font-black uppercase tracking-[0.4em] text-white/40">{project.category}</span>
+                   <h3 className="text-sm font-black uppercase tracking-tight text-white">{project.title}</h3>
                 </div>
               </div>
-              
-              <button 
-                onClick={() => setIsGlobalMuted(!isGlobalMuted)}
-                className="pointer-events-auto p-3 bg-white/10 backdrop-blur-2xl rounded-full text-white active:scale-90"
-              >
-                {isGlobalMuted ? <VolumeX size={20} /> : <Volume2 size={20} />}
-              </button>
             </div>
 
             <div 
@@ -121,34 +115,36 @@ const ProjectDetail = () => {
                     data-reel-id={reelId}
                     className="h-[100dvh] w-full snap-start relative flex items-center justify-center overflow-hidden"
                   >
-                    <div className="w-full h-full md:max-w-[420px] md:h-[90vh] aspect-[9/16] bg-neutral-900 shadow-2xl md:rounded-[2.5rem] overflow-hidden relative">
+                    {/* Perfect 9:16 Responsive Container */}
+                    <div className="w-full h-full md:max-w-[calc(100dvh*(9/16))] aspect-[9/16] bg-neutral-900 shadow-2xl md:rounded-[3rem] overflow-hidden relative border border-white/5">
                       <VideoPlayer 
                         type={item.type as 'youtube' | 'local'} 
                         src={item.src} 
                         autoplay={idx === 0}
                         isReelsMode={true}
                         reelId={reelId}
+                        loop={true}
                       />
                     </div>
                     
-                    <div className="absolute bottom-10 left-6 right-6 z-20 pointer-events-none flex flex-col gap-4 max-w-md mx-auto">
-                      <div className="space-y-1 bg-black/40 backdrop-blur-md p-4 rounded-2xl border border-white/5 inline-block self-start">
-                        <span className="text-[9px] uppercase tracking-[0.4em] font-mono text-white/40 block">
-                          ITEM 0{idx + 1} / {project.gallery?.length}
+                    <div className="absolute bottom-12 left-6 right-6 z-20 pointer-events-none flex flex-col gap-4 max-w-sm mx-auto">
+                      <div className="space-y-1.5 bg-black/50 backdrop-blur-xl p-5 rounded-3xl border border-white/10 inline-block self-start shadow-2xl">
+                        <span className="text-[9px] uppercase tracking-[0.4em] font-mono text-white/30 block">
+                          SEGMENT {idx + 1} // {project.gallery?.length}
                         </span>
-                        <h4 className="text-base font-black uppercase tracking-tighter text-white">
-                          {item.label || "Visual Proof"}
+                        <h4 className="text-lg font-black uppercase tracking-tighter text-white">
+                          {item.label || "Visual Archive"}
                         </h4>
                       </div>
                     </div>
 
                     {idx === 0 && (
                       <motion.div 
-                        animate={{ y: [0, 6, 0] }}
-                        transition={{ repeat: Infinity, duration: 2 }}
+                        animate={{ y: [0, 10, 0] }}
+                        transition={{ repeat: Infinity, duration: 2.5 }}
                         className="absolute bottom-6 left-1/2 -translate-x-1/2 text-white/20 pointer-events-none"
                       >
-                        <ChevronDown size={18} />
+                        <ChevronDown size={24} />
                       </motion.div>
                     )}
                   </div>
@@ -162,40 +158,40 @@ const ProjectDetail = () => {
       <section className="pt-24 px-6">
         <div className="container mx-auto">
             {project.isSeries ? (
-              <div className="space-y-10">
-                <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6">
+              <div className="space-y-12">
+                <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-8">
                   <div className="space-y-4">
                     <div className="flex items-center gap-3">
-                      <div className="w-1.5 h-1.5 rounded-full bg-accent animate-pulse" />
-                      <span className="text-[10px] uppercase tracking-[0.4em] font-mono opacity-50">Active Series</span>
+                      <div className="w-2 h-2 rounded-full bg-accent animate-pulse shadow-[0_0_10px_rgba(255,255,255,0.5)]" />
+                      <span className="text-[11px] uppercase tracking-[0.5em] font-mono opacity-50">Experimental Archive</span>
                     </div>
-                    <h1 className="text-4xl md:text-[7vw] font-black uppercase tracking-tighter leading-[0.85]">{project.title}</h1>
+                    <h1 className="text-5xl md:text-[8vw] font-black uppercase tracking-tighter leading-[0.8]">{project.title}</h1>
                   </div>
                   
                   <button 
                     onClick={enterReelsMode}
-                    className="group relative flex items-center gap-4 bg-white text-black px-8 py-4 rounded-full font-black text-[10px] uppercase tracking-widest active:scale-95 transition-all shadow-xl"
+                    className="group relative flex items-center gap-4 bg-white text-black px-10 py-5 rounded-full font-black text-xs uppercase tracking-[0.2em] active:scale-95 transition-all shadow-2xl hover:bg-neutral-200"
                   >
-                    <Zap size={14} fill="currentColor" />
-                    Enter Reels Mode
+                    <Zap size={16} fill="currentColor" />
+                    Enter Cinematic View
                   </button>
                 </div>
                 
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-3 md:gap-6">
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-4 md:gap-8">
                   {project.gallery?.map((item, idx) => {
                     const reelId = `gallery-${project.id}-${idx}`;
                     return (
                       <motion.div 
                         key={idx} 
                         variants={fadeUp} 
-                        className="relative aspect-[9/14] rounded-2xl md:rounded-3xl overflow-hidden border border-white/5 bg-primary shadow-xl group/card"
+                        className="relative aspect-[9/15] rounded-3xl overflow-hidden border border-white/5 bg-primary shadow-xl group/card"
                       >
                         <VideoPlayer 
                           type={item.type as 'youtube' | 'local'} 
                           src={item.src} 
                           autoplay={false} 
                           reelId={reelId}
-                          className="scale-100 group-hover/card:scale-105 transition-transform duration-700" 
+                          className="scale-100 group-hover/card:scale-105 transition-transform duration-1000 ease-[cubic-bezier(0.22,1,0.36,1)]" 
                         />
                       </motion.div>
                     );
@@ -203,39 +199,39 @@ const ProjectDetail = () => {
                 </div>
               </div>
             ) : (
-              <div className="space-y-10">
-                <motion.div layoutId={`project-container-${project.id}`} className="relative aspect-video rounded-3xl overflow-hidden border border-white/5 bg-primary shadow-2xl">
-                    <VideoPlayer {...project.heroVideo} showControls={true} reelId={`hero-${project.id}`} />
+              <div className="space-y-12">
+                <motion.div layoutId={`project-container-${project.id}`} className="relative aspect-video rounded-[2.5rem] overflow-hidden border border-white/5 bg-primary shadow-2xl">
+                    <VideoPlayer {...project.heroVideo} reelId={`hero-${project.id}`} />
                 </motion.div>
-                <h1 className="text-4xl md:text-[9vw] font-black uppercase tracking-tighter leading-[0.85]">{project.title}</h1>
+                <h1 className="text-5xl md:text-[9.5vw] font-black uppercase tracking-tighter leading-[0.8]">{project.title}</h1>
               </div>
             )}
         </div>
       </section>
 
       <section className="py-24 px-6 border-t border-white/5 mt-24">
-        <div className="container mx-auto grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16">
-          <div className="lg:col-span-4 space-y-10">
-            <div className="space-y-4">
-              <span className="text-[10px] uppercase tracking-widest text-neutral-500 font-mono">Archive_Ref</span>
-              <p className="text-neutral-400 leading-relaxed text-base">{project.description}</p>
+        <div className="container mx-auto grid grid-cols-1 lg:grid-cols-12 gap-16 lg:gap-24">
+          <div className="lg:col-span-4 space-y-12">
+            <div className="space-y-6">
+              <span className="text-[10px] uppercase tracking-[0.8em] text-neutral-500 font-mono">Archive // Reference</span>
+              <p className="text-neutral-400 leading-relaxed text-lg font-light">{project.description}</p>
             </div>
-            <div className="space-y-4">
-                <h4 className="text-[10px] uppercase tracking-[0.4em] text-accent/40 font-mono">Software_Stack</h4>
-                <div className="flex flex-wrap gap-2">
+            <div className="space-y-6">
+                <h4 className="text-[10px] uppercase tracking-[0.6em] text-accent/40 font-mono">Technical_Stack</h4>
+                <div className="flex flex-wrap gap-3">
                   {project.details.techStack.map(t => (
-                    <span key={t} className="px-3 py-1.5 bg-white/5 rounded-full text-[9px] uppercase tracking-widest border border-white/10 text-white/60">{t}</span>
+                    <span key={t} className="px-4 py-2 bg-white/5 rounded-full text-[10px] uppercase tracking-widest border border-white/10 text-white/70 hover:bg-white/10 transition-colors">{t}</span>
                   ))}
                 </div>
               </div>
           </div>
           <div className="lg:col-span-8">
-            <div className="p-8 md:p-12 rounded-[2rem] bg-white/[0.01] border border-white/5 space-y-8">
+            <div className="p-10 md:p-16 rounded-[3rem] bg-white/[0.01] border border-white/5 space-y-10 shadow-inner">
               <div className="flex items-center gap-4 text-accent/30">
-                <Terminal size={18} />
-                <span className="text-[10px] uppercase tracking-[0.6em] font-mono">Process_Analysis</span>
+                <Terminal size={22} />
+                <span className="text-[11px] uppercase tracking-[0.8em] font-mono">Creative_Deep_Dive</span>
               </div>
-              <p className="text-xl md:text-3xl text-neutral-200 font-light leading-tight italic">
+              <p className="text-2xl md:text-4xl text-neutral-200 font-light leading-tight italic tracking-tight">
                 "{project.details.analysis}"
               </p>
             </div>
@@ -243,23 +239,23 @@ const ProjectDetail = () => {
         </div>
       </section>
 
-      <section className="border-t border-white/5 pt-24 pb-32 px-6 text-center">
-        <Link to={`/portfolio/${nextProject.id}`} className="group space-y-6 block">
-          <span className="text-[10px] uppercase tracking-[1em] text-neutral-600 block">Next_Artifact</span>
-          <h2 className="text-4xl md:text-[8vw] font-black uppercase tracking-tighter leading-none group-hover:text-accent transition-colors duration-500">
+      <section className="border-t border-white/5 pt-32 pb-40 px-6 text-center">
+        <Link to={`/portfolio/${nextProject.id}`} className="group space-y-8 block">
+          <span className="text-[11px] uppercase tracking-[1em] text-neutral-700 block">Next Artifact</span>
+          <h2 className="text-5xl md:text-[9vw] font-black uppercase tracking-tighter leading-none group-hover:text-accent transition-colors duration-700">
             {nextProject.title}
           </h2>
-          <div className="flex justify-center pt-6">
-            <div className="w-12 h-12 rounded-full border border-white/10 flex items-center justify-center group-active:scale-90 transition-all">
-              <ArrowLeft size={20} className="rotate-[135deg]" />
+          <div className="flex justify-center pt-8">
+            <div className="w-16 h-16 rounded-full border border-white/10 flex items-center justify-center group-hover:bg-white group-hover:text-black transition-all duration-500 group-active:scale-90 shadow-xl">
+              <ArrowLeft size={24} className="rotate-[135deg]" />
             </div>
           </div>
         </Link>
       </section>
       
-      <footer className="py-16 text-center opacity-30">
-        <Link to="/portfolio" className="text-[9px] uppercase tracking-[0.5em] font-mono inline-flex items-center gap-3">
-          <ArrowLeft size={10} /> Return to archive
+      <footer className="py-20 text-center opacity-30">
+        <Link to="/portfolio" className="text-[10px] uppercase tracking-[0.6em] font-mono inline-flex items-center gap-4 hover:opacity-100 transition-opacity">
+          <ArrowLeft size={12} /> Return to archive
         </Link>
       </footer>
     </motion.div>
