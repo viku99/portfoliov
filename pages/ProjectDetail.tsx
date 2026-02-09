@@ -37,10 +37,15 @@ const ProjectDetail = () => {
   const project = projectIndex !== -1 ? PROJECTS[projectIndex] : null;
   const nextProject = project ? PROJECTS[(projectIndex + 1) % PROJECTS.length] : null;
 
+  // SCROLL LOCK RECOVERY: Ensure body scroll is always restored on unmount or navigation
   useEffect(() => {
     window.scrollTo(0, 0);
     setIsReelsMode(false);
     setActiveVideoId(null);
+    
+    return () => {
+      document.body.style.overflow = 'auto';
+    };
   }, [projectId, setActiveVideoId]);
 
   useEffect(() => {
@@ -49,15 +54,18 @@ const ProjectDetail = () => {
     const observer = new IntersectionObserver(
       (entries) => {
         entries.forEach(entry => {
-          if (entry.isIntersecting && entry.intersectionRatio >= 0.6) {
+          // Optimized threshold: check for center of screen intersection
+          if (entry.isIntersecting && entry.intersectionRatio >= 0.5) {
             const id = entry.target.getAttribute('data-reel-id');
-            if (id) setActiveVideoId(id);
+            if (id && activeVideoId !== id) {
+              setActiveVideoId(id);
+            }
           }
         });
       },
       {
         root: reelsContainerRef.current,
-        threshold: 0.6,
+        threshold: 0.5,
       }
     );
 
@@ -65,7 +73,7 @@ const ProjectDetail = () => {
     elements.forEach((el) => observer.observe(el));
 
     return () => observer.disconnect();
-  }, [isReelsMode, setActiveVideoId]);
+  }, [isReelsMode, setActiveVideoId, activeVideoId]);
 
   if (!project || !nextProject) return null;
 
@@ -74,12 +82,14 @@ const ProjectDetail = () => {
     setIsReelsMode(true);
     const firstId = `reel-${projectId}-0`;
     setActiveVideoId(firstId);
+    // Lock body scroll
     document.body.style.overflow = 'hidden';
   };
 
   const exitReelsMode = () => {
     setIsReelsMode(false);
     setActiveVideoId(null);
+    // Restore body scroll
     document.body.style.overflow = 'auto';
   };
 
@@ -92,14 +102,14 @@ const ProjectDetail = () => {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[200] bg-black h-[100dvh] w-full"
+            className="fixed inset-0 z-[200] bg-black h-[100dvh] w-full touch-none"
           >
-            {/* Minimal Header - Solid bg on mobile for performance */}
-            <div className={`absolute top-0 left-0 w-full z-[220] p-6 flex justify-between items-center ${isMobile ? 'bg-black' : 'bg-gradient-to-b from-black/95 to-transparent backdrop-blur-sm'} pointer-events-none`}>
+            {/* Header controls */}
+            <div className={`absolute top-0 left-0 w-full z-[220] p-6 flex justify-between items-center ${isMobile ? 'bg-black/60 backdrop-blur-md' : 'bg-gradient-to-b from-black/95 to-transparent'} pointer-events-none`}>
               <div className="flex items-center gap-4">
                 <button 
                    onClick={exitReelsMode}
-                   className="pointer-events-auto p-2.5 bg-white/10 rounded-full text-white active:scale-90 transition-all"
+                   className="pointer-events-auto p-2.5 bg-white/10 rounded-full text-white active:scale-90 transition-all border border-white/10"
                 >
                   <ArrowLeft size={22} />
                 </button>
@@ -112,7 +122,8 @@ const ProjectDetail = () => {
 
             <div 
               ref={reelsContainerRef}
-              className="h-full w-full overflow-y-scroll snap-y snap-mandatory no-scrollbar bg-black"
+              className="h-full w-full overflow-y-scroll snap-y snap-mandatory no-scrollbar bg-black scroll-smooth"
+              style={{ transform: 'translateZ(0)', WebkitOverflowScrolling: 'touch' }}
             >
               {project.gallery?.map((item, idx) => {
                 const reelId = `reel-${projectId}-${idx}`;
@@ -122,11 +133,17 @@ const ProjectDetail = () => {
                   <div 
                     key={idx} 
                     data-reel-id={reelId}
-                    className="h-[100dvh] w-full snap-start relative flex items-center justify-center overflow-hidden"
+                    className="h-[100dvh] w-full snap-start snap-always relative flex items-center justify-center overflow-hidden"
                   >
-                    {/* Perfect 9:16 Responsive Container */}
-                    <div className="w-full h-full md:max-w-[calc(100dvh*(9/16))] aspect-[9/16] bg-[#050505] shadow-2xl md:rounded-[3rem] overflow-hidden relative border border-white/5">
-                      {/* VIRTUALIZATION: Only mount VideoPlayer if it is the active one to prevent mobile memory/lag issues */}
+                    <div className="w-full h-full md:h-[90dvh] md:max-w-[calc(90dvh*(9/16))] aspect-[9/16] bg-black shadow-2xl md:rounded-[3rem] overflow-hidden relative border border-white/5">
+                      <div className="absolute inset-0 z-0 pointer-events-none">
+                         <img 
+                            src={project.imageUrl} 
+                            alt="" 
+                            className="w-full h-full object-cover opacity-10 blur-2xl scale-125"
+                         />
+                      </div>
+
                       {(!isMobile || isActive) ? (
                         <VideoPlayer 
                           type={item.type as 'youtube' | 'local'} 
@@ -137,8 +154,13 @@ const ProjectDetail = () => {
                           loop={true}
                         />
                       ) : (
-                        <div className="w-full h-full bg-black flex items-center justify-center">
-                          <div className="w-8 h-8 rounded-full border-2 border-white/10 border-t-white/40 animate-spin" />
+                        <div className="w-full h-full bg-black/40 flex items-center justify-center z-10">
+                          <img 
+                             src={project.imageUrl} 
+                             alt="" 
+                             className="absolute inset-0 w-full h-full object-cover grayscale opacity-20" 
+                          />
+                          <div className="relative z-20 w-8 h-8 rounded-full border-2 border-white/10 border-t-white/40 animate-spin" />
                         </div>
                       )}
                     </div>
@@ -200,7 +222,7 @@ const ProjectDetail = () => {
                       <motion.div 
                         key={idx} 
                         variants={fadeUp} 
-                        className="relative aspect-[9/15] rounded-3xl overflow-hidden border border-white/5 bg-primary shadow-xl group/card"
+                        className="relative aspect-[9/16] rounded-3xl overflow-hidden border border-white/5 bg-primary shadow-xl group/card"
                       >
                         <VideoPlayer 
                           type={item.type as 'youtube' | 'local'} 
@@ -215,12 +237,9 @@ const ProjectDetail = () => {
               </div>
             ) : (
               <div className="space-y-12">
-                <motion.div 
-                   layoutId={isMobile ? undefined : `project-container-${project.id}`} 
-                   className="relative aspect-video rounded-[2rem] overflow-hidden border border-white/5 bg-primary shadow-2xl"
-                >
+                <div className="relative aspect-video rounded-[2rem] overflow-hidden border border-white/5 bg-primary shadow-2xl">
                     <VideoPlayer {...project.heroVideo} reelId={`hero-${project.id}`} />
-                </motion.div>
+                </div>
                 <h1 className="text-5xl md:text-[9.5vw] font-black uppercase tracking-tighter leading-[0.8]">{project.title}</h1>
               </div>
             )}
