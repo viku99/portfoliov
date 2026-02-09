@@ -37,6 +37,14 @@ const ProjectDetail = () => {
   const project = projectIndex !== -1 ? PROJECTS[projectIndex] : null;
   const nextProject = project ? PROJECTS[(projectIndex + 1) % PROJECTS.length] : null;
 
+  // Cleanup effect to ensure scroll is ALWAYS restored
+  useEffect(() => {
+    return () => {
+      document.body.style.overflow = '';
+      document.documentElement.style.overflow = '';
+    };
+  }, []);
+
   useEffect(() => {
     if (!isReelsMode || !reelsContainerRef.current) return;
 
@@ -71,7 +79,7 @@ const ProjectDetail = () => {
     const firstId = `reel-${projectId}-0`;
     setActiveVideoId(firstId);
     
-    // Lock background scroll
+    // Strict Lock for background
     document.body.style.overflow = 'hidden';
     document.documentElement.style.overflow = 'hidden';
   };
@@ -80,9 +88,9 @@ const ProjectDetail = () => {
     setIsReelsMode(false);
     setActiveVideoId(null);
     
-    // Restore background scroll
-    document.body.style.overflow = 'auto';
-    document.documentElement.style.overflow = 'auto';
+    // Full Restore
+    document.body.style.overflow = '';
+    document.documentElement.style.overflow = '';
   };
 
   return (
@@ -94,11 +102,10 @@ const ProjectDetail = () => {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[300] bg-black h-[100dvh] w-full"
-            style={{ touchAction: 'none' }}
+            className="fixed inset-0 z-[500] bg-black h-[100dvh] w-full overflow-hidden"
           >
             {/* Header controls */}
-            <div className={`absolute top-0 left-0 w-full z-[320] p-6 flex justify-between items-center ${isMobile ? 'bg-black/60 backdrop-blur-md' : 'bg-gradient-to-b from-black/95 to-transparent'} pointer-events-none`}>
+            <div className={`absolute top-0 left-0 w-full z-[520] p-6 flex justify-between items-center ${isMobile ? 'bg-black/60 backdrop-blur-md' : 'bg-gradient-to-b from-black/95 to-transparent'} pointer-events-none`}>
               <div className="flex items-center gap-4">
                 <button 
                    onClick={exitReelsMode}
@@ -119,7 +126,7 @@ const ProjectDetail = () => {
               style={{ 
                 WebkitOverflowScrolling: 'touch',
                 scrollSnapType: 'y mandatory',
-                touchAction: 'pan-y' // EXPLICITLY ALLOW SCROLLING BUT PREVENT OTHER GESTURES
+                overscrollBehavior: 'contain'
               }}
             >
               {project.gallery?.map((item, idx) => {

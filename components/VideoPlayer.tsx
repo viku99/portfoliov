@@ -3,9 +3,7 @@ import {
   Play, 
   Loader2,
   Maximize,
-  Minimize,
-  VolumeX,
-  Volume2
+  Minimize
 } from 'lucide-react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useAppContext } from '../contexts/AppContext';
@@ -48,15 +46,9 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
   const [isReady, setIsReady] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [hasError, setHasError] = useState(false);
-  const [isMobile, setIsMobile] = useState(false);
-  const [isMuted, setIsMuted] = useState(true);
 
   const playerId = useRef(reelId || `v-${Math.random().toString(36).slice(2, 11)}`).current;
   const isActive = activeVideoId === playerId;
-
-  useEffect(() => {
-    setIsMobile(window.innerWidth < 768);
-  }, []);
 
   useEffect(() => {
     const handleFsChange = () => {
@@ -84,27 +76,20 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
 
     if (type === 'youtube') {
       if (isActive) {
-        callYT('mute');
+        callYT('unMute');
+        callYT('setVolume', 100);
         callYT('playVideo');
-        // Stability delay for mobile YouTube bridge
-        if (!isMobile) {
-          setTimeout(() => {
-            callYT('unMute');
-            setIsMuted(false);
-          }, 300);
-        }
       } else {
         callYT('pauseVideo');
-        callYT('mute');
-        setIsMuted(true);
       }
     } else if (videoRef.current) {
       const video = videoRef.current;
       if (isActive) {
-        video.muted = isMobile || isMuted;
+        video.muted = false; // Always unmuted when active
         try {
           await video.play();
         } catch (e) {
+          // Fallback if browser still blocks unmuted autoplay
           video.muted = true;
           video.play().catch(() => {});
         }
@@ -112,7 +97,7 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
         video.pause();
       }
     }
-  }, [isActive, isReady, type, hasError, callYT, isMobile, isMuted]);
+  }, [isActive, isReady, type, hasError, callYT]);
 
   useEffect(() => {
     syncPlayback();
@@ -130,7 +115,7 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
           rel: 0,
           modestbranding: 1,
           playsinline: 1,
-          mute: 1,
+          mute: 0, // Request unmuted
           loop: loop ? 1 : 0,
           playlist: loop ? src : undefined,
           enablejsapi: 1,
@@ -142,8 +127,9 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
             setIsReady(true);
             setHasError(false);
             if (isActive) {
+              callYT('unMute');
+              callYT('setVolume', 100);
               callYT('playVideo');
-              if (!isMobile) callYT('unMute');
             }
           },
           onStateChange: (event: any) => {
@@ -160,7 +146,7 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
     } catch (err) {
       setHasError(true);
     }
-  }, [src, autoplay, isActive, loop, playerId, callYT, isMobile]);
+  }, [src, autoplay, isActive, loop, playerId, callYT]);
 
   useEffect(() => {
     if (type !== 'youtube') {
@@ -206,16 +192,14 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
       if (isPlaying) {
         callYT('pauseVideo');
       } else {
-        callYT('playVideo');
         callYT('unMute');
-        setIsMuted(false);
+        callYT('playVideo');
       }
     } else if (videoRef.current) {
       const v = videoRef.current;
       if (v.paused) {
-        v.play().catch(() => {});
         v.muted = false;
-        setIsMuted(false);
+        v.play().catch(() => {});
       } else {
         v.pause();
       }
@@ -240,7 +224,6 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
     >
       {type === 'youtube' ? (
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none overflow-hidden">
-          {/* ALIGNMENT FIX: Centered scaling that handles both mobile and desktop browser iframe behaviors */}
           <div className="w-[320%] h-full min-w-[320%] absolute flex items-center justify-center origin-center">
             <div id={playerId} className="w-full h-full pointer-events-none" />
           </div>
@@ -254,7 +237,7 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
           playsInline
           loop={loop}
           preload="auto"
-          muted={isMuted}
+          muted={false}
           onLoadedMetadata={() => setIsReady(true)}
           onPlay={() => setIsPlaying(true)}
           onPause={() => setIsPlaying(false)}
@@ -270,7 +253,6 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
         )}
       </AnimatePresence>
 
-      {/* Manual UI Overlay - Guaranteed visible interaction */}
       <div className="absolute inset-0 z-30 pointer-events-none">
         <div className="absolute top-6 right-6 flex gap-3">
           <button 
@@ -295,13 +277,6 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
             )}
           </AnimatePresence>
         </div>
-
-        {isMobile && isPlaying && isMuted && (
-          <div className="absolute bottom-10 left-1/2 -translate-x-1/2 bg-black/60 px-5 py-2.5 rounded-full border border-white/10 backdrop-blur-md flex items-center gap-3 animate-bounce">
-            <VolumeX size={14} className="text-white/60" />
-            <span className="text-[9px] font-black uppercase tracking-[0.2em] text-white">Tap to Unmute</span>
-          </div>
-        )}
       </div>
     </div>
   );
