@@ -19,8 +19,9 @@ export const SITE_INFO = {
 export const PROJECTS: Project[] = [
   {
     id: "instagram-reel-edits",
-    title: "INSTAGRAM REEL EDITS",
+    title: "VERTICAL SOCIAL CONTENT",
     category: "Social Media",
+    platform: 'instagram',
     themeColor: "#E1306C",
     isSeries: true,
     description: "High-energy short-form content designed for maximum engagement. This collection showcases dynamic editing techniques optimized for the fast-paced nature of Instagram Reels and YouTube Shorts.",
@@ -42,6 +43,7 @@ export const PROJECTS: Project[] = [
     id: "eyewear-ad-series",
     title: "EYEWEAR AD SERIES",
     category: "Commercial",
+    platform: 'youtube',
     themeColor: "#D4AF37",
     isSeries: true,
     description: "Eyewear Advertisement Video Series. A collection of short-form eyewear advertisement videos created with a focus on clean visuals, strong product presence, and platform-ready pacing for social media.",
@@ -78,6 +80,7 @@ These videos were developed for an eyewear retail store based in Bangalore. For 
     id: "ai-video-prompting",
     title: "AI-VIDEO PROMPTING",
     category: "AI Experiments",
+    platform: 'ai',
     themeColor: "#8a2be2",
     isSeries: true,
     description: "AI-Generated Eyewear Frame Video Series. This project explores AI-driven video generation for eyewear product visualization, focusing on cinematic presentation, mood, and form rather than traditional product shoots.",

@@ -7,6 +7,7 @@ export interface Project {
   imageUrl: string;
   themeColor?: string; // Dominant color for UI atmosphere
   isSeries?: boolean; 
+  platform?: 'instagram' | 'youtube' | 'tiktok' | 'ai';
   cardPreviewVideo: {
     type: 'local' | 'youtube';
     src: string;
