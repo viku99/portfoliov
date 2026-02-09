@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence, useMotionValue, useSpring, useTransform } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
@@ -19,21 +18,18 @@ const PremiumPortfolio: React.FC<PremiumPortfolioProps> = ({ projects }) => {
   const lastWheelTime = useRef(0);
   const autoScrollRef = useRef<number | null>(null);
 
-  // Dynamic Scaling - Mobile-first approach
-  // Optimized for mobile: smaller base size and more conservative scaling
   const isMobile = windowWidth < 768;
-  const RING_RADIUS_X = isMobile ? windowWidth * 0.75 : 720;
-  const RING_RADIUS_Y = isMobile ? 60 : 120;
-  const VISIBLE_RANGE = isMobile ? 2 : 3;
+  const RING_RADIUS_X = isMobile ? windowWidth * 0.7 : 720;
+  const RING_RADIUS_Y = isMobile ? 40 : 120;
+  const VISIBLE_RANGE = isMobile ? 1 : 3;
 
-  // Parallax Values
   const mouseX = useMotionValue(0);
   const mouseY = useMotionValue(0);
   const smoothMouseX = useSpring(mouseX, { damping: 50, stiffness: 400 });
   const smoothMouseY = useSpring(mouseY, { damping: 50, stiffness: 400 });
 
-  const rotateActiveX = useTransform(smoothMouseY, [-300, 300], [10, -10]);
-  const rotateActiveY = useTransform(smoothMouseX, [-400, 400], [-15, 15]);
+  const rotateActiveX = useTransform(smoothMouseY, [-300, 300], [8, -8]);
+  const rotateActiveY = useTransform(smoothMouseX, [-400, 400], [-12, 12]);
 
   useEffect(() => {
     const handleResize = () => setWindowWidth(window.innerWidth);
@@ -90,7 +86,7 @@ const PremiumPortfolio: React.FC<PremiumPortfolioProps> = ({ projects }) => {
   }, [handleNext, handlePrev]);
 
   const handleMouseMove = (e: React.MouseEvent) => {
-    if (!containerRef.current) return;
+    if (isMobile || !containerRef.current) return;
     const rect = containerRef.current.getBoundingClientRect();
     const x = e.clientX - (rect.left + rect.width / 2);
     const y = e.clientY - (rect.top + rect.height / 2);
@@ -108,7 +104,7 @@ const PremiumPortfolio: React.FC<PremiumPortfolioProps> = ({ projects }) => {
       if (now - lastWheelTime.current < 450) return;
       
       const dominantDelta = Math.abs(e.deltaY) > Math.abs(e.deltaX) ? e.deltaY : e.deltaX;
-      if (Math.abs(dominantDelta) < 15) return;
+      if (Math.abs(dominantDelta) < 10) return;
 
       setIsPaused(true);
       if (dominantDelta > 0) {
@@ -132,18 +128,17 @@ const PremiumPortfolio: React.FC<PremiumPortfolioProps> = ({ projects }) => {
     if (rel > L / 2) rel -= L;
     if (rel < -L / 2) rel += L;
 
-    const angleStep = isMobile ? 0.8 : 0.45; 
+    const angleStep = isMobile ? 1.0 : 0.45; 
     const angle = rel * angleStep;
     
     const x = Math.sin(angle) * RING_RADIUS_X;
     const y = -Math.cos(angle) * RING_RADIUS_Y + (RING_RADIUS_Y);
     
     const dist = Math.abs(rel);
-    const z = -dist * (isMobile ? 200 : 250); 
-    const opacity = Math.max(0, 1 - dist * 0.45);
-    // Reduced scale for mobile (1.1 instead of 1.3) to prevent filling the screen
-    const scale = i === centerIndex ? (isMobile ? 1.1 : 1.3) : Math.max(0.4, 1 - dist * 0.35);
-    const rotateY = -rel * (isMobile ? 40 : 25); 
+    const z = -dist * (isMobile ? 180 : 250); 
+    const opacity = Math.max(0, 1 - dist * 0.5);
+    const scale = i === centerIndex ? (isMobile ? 1.05 : 1.3) : Math.max(0.4, 1 - dist * 0.4);
+    const rotateY = -rel * (isMobile ? 35 : 25); 
     const zIndex = 100 - Math.round(dist * 10);
     
     return { x, y, z, opacity, scale, rotateY, zIndex, rel };
@@ -164,21 +159,21 @@ const PremiumPortfolio: React.FC<PremiumPortfolioProps> = ({ projects }) => {
     <div 
       className="w-full relative select-none" 
       onMouseMove={handleMouseMove}
-      onMouseEnter={() => setIsPaused(true)}
-      onMouseLeave={() => setIsPaused(false)}
+      onMouseEnter={() => !isMobile && setIsPaused(true)}
+      onMouseLeave={() => !isMobile && setIsPaused(false)}
       onTouchStart={() => setIsPaused(true)}
       onTouchEnd={() => setIsPaused(false)}
     >
-      <div className="max-w-4xl mx-auto mb-10 md:mb-24 px-6">
-        <div className="bg-[#0f0f0f]/50 backdrop-blur-3xl border border-white/5 rounded-full px-6 md:px-10 py-1 md:py-2 flex items-center gap-4 md:gap-6 shadow-2xl">
-          <div className="flex-1 flex items-center gap-3 md:gap-4">
-            <Search className="w-4 h-4 text-neutral-700" />
+      <div className="max-w-4xl mx-auto mb-8 md:mb-24 px-6">
+        <div className="bg-[#0f0f0f]/40 backdrop-blur-2xl border border-white/5 rounded-full px-6 py-1 flex items-center gap-4 shadow-2xl">
+          <div className="flex-1 flex items-center gap-3">
+            <Search className="w-4 h-4 text-neutral-800" />
             <input 
               type="text" 
               placeholder="SEARCH ARCHIVE..." 
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              className="w-full bg-transparent py-3 md:py-4 text-[9px] md:text-[11px] uppercase tracking-[0.4em] font-bold outline-none placeholder:text-neutral-800 text-white/80"
+              className="w-full bg-transparent py-3 text-[9px] uppercase tracking-[0.4em] font-bold outline-none placeholder:text-neutral-900 text-white/70"
             />
           </div>
           <div className="hidden md:flex items-center gap-10 border-l border-white/5 pl-10 font-mono text-[10px] uppercase tracking-widest text-neutral-600">
@@ -189,21 +184,20 @@ const PremiumPortfolio: React.FC<PremiumPortfolioProps> = ({ projects }) => {
 
       <div 
         ref={containerRef}
-        className="relative h-[500px] md:h-[750px] flex items-center justify-center overflow-visible touch-none"
+        className="relative h-[480px] md:h-[750px] flex items-center justify-center overflow-visible touch-none"
       >
         <div className="absolute inset-0 pointer-events-none overflow-hidden">
-           <div className="absolute top-1/2 left-0 w-full h-[1px] bg-white/[0.05] z-0" />
            <motion.div 
               animate={{ 
                 backgroundColor: activeProject?.themeColor || '#ffffff',
-                opacity: [0.02, 0.06, 0.02]
+                opacity: [0.01, 0.04, 0.01]
               }}
               transition={{ duration: 6, repeat: Infinity }}
-              className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[1800px] h-[900px] rounded-full blur-[160px]" 
+              className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[1600px] h-[800px] rounded-full blur-[140px]" 
            />
         </div>
 
-        <div className="relative w-full h-full flex items-center justify-center perspective-[3000px]">
+        <div className="relative w-full h-full flex items-center justify-center perspective-[2000px]">
           <AnimatePresence mode="popLayout">
             {filtered.map((p, i) => {
               const props = getCardProps(i);
@@ -219,49 +213,41 @@ const PremiumPortfolio: React.FC<PremiumPortfolioProps> = ({ projects }) => {
                   className="absolute cursor-pointer will-change-transform"
                   style={{ 
                     zIndex,
-                    rotateX: isCenter ? rotateActiveX : 0,
-                    rotateY: isCenter ? rotateActiveY : rotateY,
+                    rotateX: isCenter && !isMobile ? rotateActiveX : 0,
+                    rotateY: isCenter && !isMobile ? rotateActiveY : rotateY,
                   }}
                   initial={false}
                   animate={{ 
                     x, y, z, opacity, scale, 
-                    filter: isCenter ? 'blur(0px) saturate(1.1)' : `blur(${Math.abs(rel) * 8}px) saturate(0)`
+                    filter: isMobile ? 'none' : (isCenter ? 'blur(0px) saturate(1.1)' : `blur(${Math.abs(rel) * 10}px) saturate(0)`)
                   }}
-                  transition={{ type: "spring", stiffness: 50, damping: 22, mass: 1 }}
+                  transition={{ type: "spring", stiffness: 60, damping: 20 }}
                   onClick={() => isCenter ? navigate(`/portfolio/${p.id}`) : setCenterIndex(i)}
                 >
-                  {/* Reduced base width on mobile from 280px to 210px for better viewport proportion */}
-                  <div className={`relative w-[210px] md:w-[360px] aspect-[9/14] rounded-[2rem] md:rounded-[2.5rem] overflow-hidden group transition-all duration-700 ${isCenter ? 'shadow-[0_40px_100px_rgba(0,0,0,1)] ring-1 ring-white/20' : 'opacity-30'}`}>
-                    <div className="absolute inset-0 bg-[#0a0a0a]" />
-
+                  <div className={`relative w-[220px] md:w-[360px] aspect-[9/14] rounded-[2rem] md:rounded-[2.5rem] overflow-hidden group transition-all duration-700 ${isCenter ? 'shadow-[0_40px_100px_rgba(0,0,0,1)] ring-1 ring-white/10' : 'opacity-30'}`}>
+                    <div className="absolute inset-0 bg-[#070707]" />
                     <motion.img 
-                      style={{ scale: 1.3 }}
+                      style={{ scale: 1.2 }}
                       src={p.imageUrl} 
                       alt={p.title} 
-                      className="w-full h-full object-cover grayscale-0 transition-transform duration-[8s] group-hover:scale-150" 
+                      className="w-full h-full object-cover grayscale-0" 
                     />
-                    
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/40 to-transparent z-10" />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/30 to-transparent z-10" />
                     
                     <div className="absolute inset-0 p-6 md:p-10 flex flex-col justify-end text-center z-20">
                        <div className="space-y-3 md:space-y-6 mb-8 md:mb-12">
-                          <div className="flex items-center justify-center gap-2 md:gap-3">
-                             <div className="h-[1px] w-4 md:w-6 bg-white/20" />
-                             <span className="text-white/40 scale-75 md:scale-100">{getPlatformIcon(p)}</span>
-                             <span className="text-[8px] md:text-[10px] uppercase tracking-[0.4em] md:tracking-[0.5em] font-mono text-white/50">{p.category}</span>
-                             <div className="h-[1px] w-4 md:w-6 bg-white/20" />
+                          <div className="flex items-center justify-center gap-2">
+                             <span className="text-white/30 scale-75">{getPlatformIcon(p)}</span>
+                             <span className="text-[8px] md:text-[10px] uppercase tracking-[0.4em] font-mono text-white/40">{p.category}</span>
                           </div>
                           
-                          <motion.h3 
-                            key={`title-${centerIndex}`}
-                            className="text-lg md:text-5xl font-black uppercase tracking-tighter leading-[0.85] text-white drop-shadow-2xl"
-                          >
+                          <h3 className="text-xl md:text-5xl font-black uppercase tracking-tighter leading-[0.85] text-white">
                             {p.title}
-                          </motion.h3>
+                          </h3>
                        </div>
 
-                       <div className="absolute bottom-6 md:bottom-10 left-6 md:left-10 right-6 md:right-10 flex justify-between items-center text-white/20 font-mono text-[8px] md:text-[10px]">
-                          <span>NO. {i + 1}</span>
+                       <div className="absolute bottom-6 md:bottom-10 left-6 md:left-10 right-6 md:right-10 flex justify-between items-center text-white/10 font-mono text-[8px] md:text-[10px]">
+                          <span>0{i + 1}</span>
                           <span>{p.details.year}</span>
                        </div>
                     </div>
@@ -273,39 +259,39 @@ const PremiumPortfolio: React.FC<PremiumPortfolioProps> = ({ projects }) => {
         </div>
       </div>
 
-      <div className="flex flex-col items-center gap-8 md:gap-12 -mt-4 md:-mt-12 mb-20">
-        <div className="flex items-center gap-8 md:gap-10">
+      <div className="flex flex-col items-center gap-8 md:gap-12 -mt-4 mb-20">
+        <div className="flex items-center gap-8">
            <button 
             onClick={() => { handlePrev(); setIsPaused(true); }}
-            className="p-4 md:p-5 rounded-full border border-white/10 text-neutral-600 hover:text-white hover:bg-white/10 transition-all active:scale-90"
+            className="p-4 rounded-full border border-white/5 text-neutral-800 hover:text-white transition-all active:scale-90"
            >
-              <ChevronDown className="w-4 h-4 md:w-5 md:h-5 rotate-90" />
+              <ChevronDown className="w-4 h-4 rotate-90" />
            </button>
            
-           <div className="flex gap-2 md:gap-3">
+           <div className="flex gap-2">
               {filtered.map((_, idx) => (
                 <button 
                   key={idx}
                   onClick={() => { setCenterIndex(idx); setIsPaused(true); }}
-                  className={`h-1.5 transition-all duration-700 rounded-full ${idx === centerIndex ? 'w-8 md:w-12 bg-accent' : 'w-1.5 md:w-2 bg-white/10'}`}
+                  className={`h-1 transition-all duration-500 rounded-full ${idx === centerIndex ? 'w-8 bg-white/40' : 'w-1.5 bg-white/5'}`}
                 />
               ))}
            </div>
 
            <button 
             onClick={() => { handleNext(); setIsPaused(true); }}
-            className="p-4 md:p-5 rounded-full border border-white/10 text-neutral-600 hover:text-white hover:bg-white/10 transition-all active:scale-90"
+            className="p-4 rounded-full border border-white/5 text-neutral-800 hover:text-white transition-all active:scale-90"
            >
-              <ChevronDown className="w-4 h-4 md:w-5 md:h-5 -rotate-90" />
+              <ChevronDown className="w-4 h-4 -rotate-90" />
            </button>
         </div>
 
         <button 
           onClick={() => document.getElementById('grid-scan-mode')?.scrollIntoView({ behavior: 'smooth' })}
-          className="group flex items-center gap-4 md:gap-6 bg-white/5 border border-white/10 hover:bg-accent hover:text-background px-8 md:px-16 py-4 md:py-6 rounded-full transition-all duration-700"
+          className="group flex items-center gap-4 bg-white/5 border border-white/5 hover:bg-white hover:text-black px-8 py-4 rounded-full transition-all duration-500"
         >
-          <LayoutGrid className="w-3.5 h-3.5 md:w-4 md:h-4" />
-          <span className="text-[9px] md:text-[11px] font-black uppercase tracking-[0.4em] md:tracking-[0.5em]">EXPLORE ALL WORKS</span>
+          <LayoutGrid className="w-3.5 h-3.5" />
+          <span className="text-[9px] font-black uppercase tracking-[0.4em]">ARCHIVE LIST</span>
         </button>
       </div>
     </div>
