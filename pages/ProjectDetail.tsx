@@ -37,11 +37,13 @@ const ProjectDetail = () => {
   const project = projectIndex !== -1 ? PROJECTS[projectIndex] : null;
   const nextProject = project ? PROJECTS[(projectIndex + 1) % PROJECTS.length] : null;
 
-  // Cleanup effect to ensure scroll is ALWAYS restored
+  // Global scroll restoration cleanup
   useEffect(() => {
     return () => {
       document.body.style.overflow = '';
       document.documentElement.style.overflow = '';
+      document.body.style.position = '';
+      document.body.style.width = '';
     };
   }, []);
 
@@ -79,7 +81,7 @@ const ProjectDetail = () => {
     const firstId = `reel-${projectId}-0`;
     setActiveVideoId(firstId);
     
-    // Strict Lock for background
+    // Strict Lock background
     document.body.style.overflow = 'hidden';
     document.documentElement.style.overflow = 'hidden';
   };
@@ -88,7 +90,7 @@ const ProjectDetail = () => {
     setIsReelsMode(false);
     setActiveVideoId(null);
     
-    // Full Restore
+    // Strict Restore scroll
     document.body.style.overflow = '';
     document.documentElement.style.overflow = '';
   };
@@ -104,7 +106,7 @@ const ProjectDetail = () => {
             exit={{ opacity: 0 }}
             className="fixed inset-0 z-[500] bg-black h-[100dvh] w-full overflow-hidden"
           >
-            {/* Header controls */}
+            {/* Header controls - Always on top */}
             <div className={`absolute top-0 left-0 w-full z-[520] p-6 flex justify-between items-center ${isMobile ? 'bg-black/60 backdrop-blur-md' : 'bg-gradient-to-b from-black/95 to-transparent'} pointer-events-none`}>
               <div className="flex items-center gap-4">
                 <button 
@@ -120,13 +122,14 @@ const ProjectDetail = () => {
               </div>
             </div>
 
+            {/* Scroll Container - Optimized for mobile swipes */}
             <div 
               ref={reelsContainerRef}
               className="h-full w-full overflow-y-scroll snap-y snap-mandatory no-scrollbar bg-black"
               style={{ 
                 WebkitOverflowScrolling: 'touch',
                 scrollSnapType: 'y mandatory',
-                overscrollBehavior: 'contain'
+                overscrollBehavior: 'contain' // Prevents scroll chaining to background
               }}
             >
               {project.gallery?.map((item, idx) => {
@@ -148,6 +151,7 @@ const ProjectDetail = () => {
                          />
                       </div>
 
+                      {/* We only render the video if it's mobile or active to save resources */}
                       {(!isMobile || isActive) ? (
                         <VideoPlayer 
                           type={item.type as 'youtube' | 'local'} 
@@ -169,6 +173,7 @@ const ProjectDetail = () => {
                       )}
                     </div>
                     
+                    {/* Metadata Overlay */}
                     <div className="absolute bottom-12 left-6 right-6 z-20 pointer-events-none flex flex-col gap-4 max-w-sm mx-auto">
                       <div className={`space-y-1.5 ${isMobile ? 'bg-black/90' : 'bg-black/50 backdrop-blur-xl'} p-5 rounded-3xl border border-white/10 inline-block self-start shadow-2xl`}>
                         <span className="text-[9px] uppercase tracking-[0.4em] font-mono text-white/30 block">

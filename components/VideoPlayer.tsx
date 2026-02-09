@@ -76,6 +76,7 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
 
     if (type === 'youtube') {
       if (isActive) {
+        // Force audio on and play
         callYT('unMute');
         callYT('setVolume', 100);
         callYT('playVideo');
@@ -85,13 +86,12 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
     } else if (videoRef.current) {
       const video = videoRef.current;
       if (isActive) {
-        video.muted = false; // Always unmuted when active
+        video.muted = false; // Audio is mandatory unmuted when active
         try {
           await video.play();
         } catch (e) {
-          // Fallback if browser still blocks unmuted autoplay
-          video.muted = true;
-          video.play().catch(() => {});
+          // Fallback only if strictly required by browser, but we try unmuted first
+          console.warn("Unmuted playback failed, browser may require further interaction", e);
         }
       } else {
         video.pause();
@@ -115,7 +115,7 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
           rel: 0,
           modestbranding: 1,
           playsinline: 1,
-          mute: 0, // Request unmuted
+          mute: 0, // Request unmuted explicitly
           loop: loop ? 1 : 0,
           playlist: loop ? src : undefined,
           enablejsapi: 1,
