@@ -53,7 +53,7 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
   
   const playerId = useRef(reelId || `v-${Math.random().toString(36).slice(2, 11)}`).current;
 
-  // Monitor fullscreen state
+  // Handle Fullscreen events
   useEffect(() => {
     const handleFsChange = () => {
       setIsFullscreen(!!document.fullscreenElement && document.fullscreenElement === containerRef.current);
@@ -241,6 +241,7 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
     >
       {type === 'youtube' ? (
         <div className="absolute inset-0 pointer-events-none flex items-center justify-center overflow-hidden">
+          {/* Optimized Scaling for Full Height 9:16 Coverage */}
           <div className="w-[317%] h-full min-w-[317%] absolute top-0 left-1/2 -translate-x-1/2">
             <div id={playerId} className="w-full h-full pointer-events-none" />
           </div>
@@ -259,7 +260,7 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
       )}
 
       {/* Control Overlays */}
-      <div className="absolute top-4 right-4 z-[50] flex flex-col gap-3 md:top-6 md:right-6">
+      <div className="absolute top-4 right-4 z-[50] flex flex-col gap-3 md:top-6 md:right-6 opacity-0 group-hover/vid:opacity-100 transition-opacity">
         {isReady && (
           <button 
             onClick={toggleFullscreen}

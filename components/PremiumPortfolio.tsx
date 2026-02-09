@@ -1,3 +1,4 @@
+
 import React, { useState, useMemo, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence, useMotionValue, useSpring, useTransform } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
@@ -219,6 +220,7 @@ const PremiumPortfolio: React.FC<PremiumPortfolioProps> = ({ projects }) => {
                   initial={false}
                   animate={{ 
                     x, y, z, opacity, scale, 
+                    // PERFORMANCE FIX: Disable expensive blur filters on mobile
                     filter: isMobile ? 'none' : (isCenter ? 'blur(0px) saturate(1.1)' : `blur(${Math.abs(rel) * 10}px) saturate(0)`)
                   }}
                   transition={{ type: "spring", stiffness: 60, damping: 20 }}

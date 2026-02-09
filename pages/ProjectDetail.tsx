@@ -1,3 +1,4 @@
+
 import React, { useMemo, useEffect, useState, useRef } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { motion, Variants, AnimatePresence } from 'framer-motion';
@@ -41,7 +42,7 @@ const ProjectDetail = () => {
     const observer = new IntersectionObserver(
       (entries) => {
         entries.forEach(entry => {
-          if (entry.isIntersecting && entry.intersectionRatio >= 0.6) {
+          if (entry.isIntersecting && entry.intersectionRatio >= 0.7) {
             const id = entry.target.getAttribute('data-reel-id');
             if (id) setActiveVideoId(id);
           }
@@ -49,7 +50,7 @@ const ProjectDetail = () => {
       },
       {
         root: reelsContainerRef.current,
-        threshold: 0.6,
+        threshold: 0.7,
       }
     );
 
@@ -187,14 +188,14 @@ const ProjectDetail = () => {
                       <motion.div 
                         key={idx} 
                         variants={fadeUp} 
-                        className="relative aspect-[9/14] rounded-2xl md:rounded-3xl overflow-hidden border border-white/5 bg-primary shadow-xl"
+                        className="relative aspect-[9/14] rounded-2xl md:rounded-3xl overflow-hidden border border-white/5 bg-primary shadow-xl group/card"
                       >
                         <VideoPlayer 
                           type={item.type as 'youtube' | 'local'} 
                           src={item.src} 
                           autoplay={false} 
                           reelId={reelId}
-                          className="scale-110" // Slight boost for the grid view
+                          className="scale-100 group-hover/card:scale-105 transition-transform duration-700" 
                         />
                       </motion.div>
                     );

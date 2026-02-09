@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { useLocation } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
@@ -12,8 +13,8 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
 
   return (
     <div className="bg-background text-accent font-sans min-h-screen relative overflow-x-hidden selection:bg-accent selection:text-background">
-      {/* Enhanced Grain Overlay - Optimized for mobile performance */}
-      <div className="fixed inset-0 pointer-events-none z-[100] opacity-[0.02] md:opacity-[0.03] overflow-hidden">
+      {/* PERFORMANCE FIX: Reduced grain opacity for mobile viewports */}
+      <div className="fixed inset-0 pointer-events-none z-[100] opacity-[0.015] md:opacity-[0.03] overflow-hidden">
         <div className="absolute inset-[-200%] bg-[url('https://grainy-gradients.vercel.app/noise.svg')] animate-grain" />
       </div>
 
@@ -30,7 +31,7 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              transition={{ duration: 0.4, ease: "easeOut" }}
+              transition={{ duration: 0.3, ease: "easeOut" }}
             >
               <div className="bg-background">{children}</div>
             </motion.div>
